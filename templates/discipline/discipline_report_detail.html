@@ -1,0 +1,421 @@
+{% extends 'base.html' %}
+
+{% block title %}Report: {{ report.title }} - School Management Portal{% endblock %}
+
+{% block breadcrumb_items %}
+    <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+    <li><a href="{% url 'discipline_report_list' %}">Discipline Reports</a></li>
+    <li class="is-active"><a href="#" aria-current="page">Report Details</a></li>
+{% endblock %}
+
+{% block page_icon %}<span class="icon is-medium mr-2"><i class="fas fa-clipboard-check"></i></span>{% endblock %}
+{% block page_title %}Discipline Report: {{ report.title }}{% endblock %}
+{% block page_subtitle %}Viewing detailed information for report #{{ report.id }}{% endblock %}
+
+{% block content %}
+<div class="columns is-multiline">
+    <!-- Report Status Card -->
+    <div class="column is-12">
+        <div class="card">
+            <div class="card-content">
+                <div class="level is-mobile">
+                    <!-- Left side - Report Meta -->
+                    <div class="level-left">
+                        <div>
+                            <p class="is-size-7 has-text-grey mb-1">Report Status</p>
+                            {% if report.status == 'pending' %}
+                                <span class="tag is-warning is-medium">
+                                    <span class="icon is-small mr-1"><i class="fas fa-clock"></i></span>
+                                    Pending
+                                </span>
+                            {% elif report.status == 'in_progress' %}
+                                <span class="tag is-info is-medium">
+                                    <span class="icon is-small mr-1"><i class="fas fa-spinner"></i></span>
+                                    In Progress
+                                </span>
+                            {% elif report.status == 'resolved' %}
+                                <span class="tag is-success is-medium">
+                                    <span class="icon is-small mr-1"><i class="fas fa-check"></i></span>
+                                    Resolved
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Right side - Severity -->
+                    <div class="level-right">
+                        <div class="has-text-right">
+                            <p class="is-size-7 has-text-grey mb-1">Severity Level</p>
+                            {% if report.severity == 'minor' %}
+                                <span class="tag is-warning is-light is-medium">
+                                    <span class="icon is-small mr-1"><i class="fas fa-exclamation"></i></span>
+                                    Minor
+                                </span>
+                            {% elif report.severity == 'moderate' %}
+                                <span class="tag is-warning is-medium">
+                                    <span class="icon is-small mr-1"><i class="fas fa-exclamation-circle"></i></span>
+                                    Moderate
+                                </span>
+                            {% elif report.severity == 'serious' %}
+                                <span class="tag is-danger is-light is-medium">
+                                    <span class="icon is-small mr-1"><i class="fas fa-exclamation-triangle"></i></span>
+                                    Serious
+                                </span>
+                            {% elif report.severity == 'critical' %}
+                                <span class="tag is-danger is-medium">
+                                    <span class="icon is-small mr-1"><i class="fas fa-radiation"></i></span>
+                                    Critical
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Report Details -->
+    <div class="column is-8">
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-file-alt"></i></span>
+                    Report Details
+                </p>
+                {% if user.is_staff %}
+                <a href="{% url 'discipline_report_edit' report.id %}" class="card-header-icon">
+                    <span class="icon has-text-info">
+                        <i class="fas fa-edit"></i>
+                    </span>
+                </a>
+                {% endif %}
+            </header>
+            <div class="card-content">
+                <div class="content">
+                    <div class="field">
+                        <label class="label">Date of Incident</label>
+                        <div class="control">
+                            <div class="is-static">{{ report.date|date:"F d, Y" }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <label class="label">Description</label>
+                        <div class="control">
+                            <div class="content box has-background-light">
+                                {{ report.description|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if report.comment %}
+                    <div class="field">
+                        <label class="label">Additional Comments</label>
+                        <div class="control">
+                            <div class="content box has-background-light">
+                                {{ report.comment|linebreaks }}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="field">
+                        <label class="label">Reported By</label>
+                        <div class="control">
+                            <div class="is-static">
+                                {% if report.added_by %}
+                                    {{ report.added_by.get_full_name|default:report.added_by.username }}
+                                {% else %}
+                                    <span class="has-text-grey-light">Unknown</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <footer class="card-footer">
+                <div class="card-footer-item">
+                    <span class="has-text-grey">Created: {{ report.created_at|date:"M d, Y H:i" }}</span>
+                </div>
+                {% if report.updated_at and report.updated_at != report.created_at %}
+                <div class="card-footer-item">
+                    <span class="has-text-grey">Last Updated: {{ report.updated_at|date:"M d, Y H:i" }}</span>
+                </div>
+                {% endif %}
+            </footer>
+        </div>
+        
+        <!-- Status Update Form (Staff Only) -->
+        {% if user.is_staff %}
+        <div class="card mt-4">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-exchange-alt"></i></span>
+                    Update Status
+                </p>
+            </header>
+            <div class="card-content">
+                <form method="post" action="{% url 'discipline_report_update_status' report.id %}">
+                    {% csrf_token %}
+                    <div class="field">
+                        <label class="label">Change Status</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                <select name="status">
+                                    {% for status_value, status_name in status_choices %}
+                                        <option value="{{ status_value }}" {% if report.status == status_value %}selected{% endif %}>
+                                            {{ status_name }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <label class="label">Add Comment (Optional)</label>
+                        <div class="control">
+                            <textarea class="textarea" name="status_comment" placeholder="Add a comment about this status change"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <div class="control">
+                            <button type="submit" class="button is-primary">
+                                <span class="icon is-small"><i class="fas fa-save"></i></span>
+                                <span>Update Status</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Right Sidebar - Student Info & Actions -->
+    <div class="column is-4">
+        <!-- Student Information -->
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-user-graduate"></i></span>
+                    Student Information
+                </p>
+                <a href="{% url 'student_detail' report.student.id %}" class="card-header-icon">
+                    <span class="icon has-text-info">
+                        <i class="fas fa-external-link-alt"></i>
+                    </span>
+                </a>
+            </header>
+            <div class="card-content">
+                <div class="content">
+                    <p class="title is-5">{{ report.student.name }}</p>
+                    <p class="subtitle is-6">{{ report.student.get_grade_display }}</p>
+                    
+                    <div class="field">
+                        <label class="label is-small">Enrollment Number</label>
+                        <div class="control">
+                            <div class="is-static">{{ report.student.enrollment_number }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <label class="label is-small">Gender</label>
+                        <div class="control">
+                            <div class="is-static">{{ report.student.get_gender_display }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <label class="label is-small">Enrollment Date</label>
+                        <div class="control">
+                            <div class="is-static">{{ report.student.enrollment_date|date:"M d, Y" }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <footer class="card-footer">
+                <a href="{% url 'student_detail' report.student.id %}" class="card-footer-item has-text-primary">
+                    <span class="icon"><i class="fas fa-user"></i></span>
+                    <span>View Full Profile</span>
+                </a>
+                {% if user.is_staff %}
+                <a href="#" class="card-footer-item has-text-info js-show-parent-info">
+                    <span class="icon"><i class="fas fa-users"></i></span>
+                    <span>Parent Contacts</span>
+                </a>
+                {% endif %}
+            </footer>
+        </div>
+        
+        <!-- Parent Information (initially hidden, toggles with JavaScript) -->
+        {% if user.is_staff %}
+        <div class="card mt-4 is-hidden" id="parent-info-card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-users"></i></span>
+                    Parent Information
+                </p>
+                <button class="card-header-icon js-hide-parent-info">
+                    <span class="icon">
+                        <i class="fas fa-times"></i>
+                    </span>
+                </button>
+            </header>
+            <div class="card-content">
+                <div class="content">
+                    {% for parent in report.student.parent_profiles.all %}
+                    <div class="box mb-3 {% if not forloop.last %}mb-4{% endif %}">
+                        <p class="is-size-6 has-text-weight-bold">{{ parent.user.get_full_name }}</p>
+                        <p class="is-size-7 mb-2">{{ parent.get_parent_role_display }}</p>
+                        
+                        <div class="field is-grouped is-grouped-multiline">
+                            <div class="control">
+                                <div class="tags has-addons">
+                                    <span class="tag is-dark"><i class="fas fa-phone fa-sm mr-1"></i> Phone</span>
+                                    <span class="tag is-info">{{ parent.phone }}</span>
+                                </div>
+                            </div>
+                            
+                            <div class="control">
+                                <div class="tags has-addons">
+                                    <span class="tag is-dark"><i class="fas fa-envelope fa-sm mr-1"></i> Email</span>
+                                    <span class="tag is-info">{{ parent.user.email }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="notification is-warning is-light">
+                        <p>No parent profiles linked to this student.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Action Buttons -->
+        <div class="card mt-4">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-bolt"></i></span>
+                    Actions
+                </p>
+            </header>
+            <div class="card-content">
+                <div class="buttons">
+                    <a href="{% url 'discipline_report_list' %}" class="button is-info is-fullwidth">
+                        <span class="icon"><i class="fas fa-arrow-left"></i></span>
+                        <span>Back to Reports</span>
+                    </a>
+                    
+                    {% if user.is_staff %}
+                    <a href="{% url 'discipline_report_edit' report.id %}" class="button is-warning is-fullwidth">
+                        <span class="icon"><i class="fas fa-edit"></i></span>
+                        <span>Edit Report</span>
+                    </a>
+
+                    {% if user.is_superuser or user == report.added_by %}
+                    <button class="button is-danger is-light is-fullwidth js-delete-report">
+                        <span class="icon"><i class="fas fa-trash"></i></span>
+                        <span>Delete Report</span>
+                    </button>
+                    {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal" id="delete-modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title">Confirm Delete</p>
+            <button class="delete" aria-label="close" id="close-modal"></button>
+        </header>
+        <section class="modal-card-body">
+            <p>Are you sure you want to delete this discipline report?</p>
+            <p class="has-text-danger"><strong>This action cannot be undone.</strong></p>
+        </section>
+        <footer class="modal-card-foot">
+            <form method="post" action="{% url 'discipline_report_delete' report.id %}">
+                {% csrf_token %}
+                <button type="submit" class="button is-danger">Delete Report</button>
+                <button type="button" class="button" id="cancel-delete">Cancel</button>
+            </form>
+        </footer>
+    </div>
+</div>
+
+<!-- Add JavaScript for interactivity -->
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Parent Info toggle
+        const showParentInfoBtn = document.querySelector('.js-show-parent-info');
+        const hideParentInfoBtn = document.querySelector('.js-hide-parent-info');
+        const parentInfoCard = document.getElementById('parent-info-card');
+        
+        if (showParentInfoBtn && hideParentInfoBtn && parentInfoCard) {
+            showParentInfoBtn.addEventListener('click', function(e) {
+                e.preventDefault();
+                parentInfoCard.classList.remove('is-hidden');
+            });
+            
+            hideParentInfoBtn.addEventListener('click', function() {
+                parentInfoCard.classList.add('is-hidden');
+            });
+        }
+        
+        // Delete confirmation modal
+        const deleteBtn = document.querySelector('.js-delete-report');
+        const deleteModal = document.getElementById('delete-modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        const cancelDeleteBtn = document.getElementById('cancel-delete');
+        
+        if (deleteBtn && deleteModal) {
+            deleteBtn.addEventListener('click', function() {
+                deleteModal.classList.add('is-active');
+            });
+            
+            if (closeModalBtn) {
+                closeModalBtn.addEventListener('click', function() {
+                    deleteModal.classList.remove('is-active');
+                });
+            }
+            
+            if (cancelDeleteBtn) {
+                cancelDeleteBtn.addEventListener('click', function() {
+                    deleteModal.classList.remove('is-active');
+                });
+            }
+        }
+    });
+</script>
+
+<style>
+    .is-static {
+        background-color: #f5f5f5;
+        border-radius: 4px;
+        padding: 0.5rem;
+        color: #4a4a4a;
+    }
+    
+    .card {
+        box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+    
+    @media screen and (max-width: 768px) {
+        .column.is-4, .column.is-8 {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}

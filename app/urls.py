@@ -21,9 +21,10 @@ urlpatterns = [
     # Placeholder for report detail - needs a view function `discipline_report_detail_view`
     path('reports/<int:pk>/', views.discipline_report_detail_view, name='discipline_report_detail'),
     # Placeholder for editing a report - needs a view function `update_discipline_report`
-    # path('reports/<int:pk>/edit/', views.update_discipline_report, name='update_discipline_report'),
+    path('reports/<int:pk>/edit/', views.discipline_report_edit, name='discipline_report_edit'),
+    path('reports/<int:pk>/edit/status/', views.discipline_report_update_status, name='discipline_report_update_status'),
     # Placeholder for deleting a report (soft delete) - needs a view function `delete_discipline_report`
-    # path('reports/<int:pk>/delete/', views.delete_discipline_report, name='delete_discipline_report'),
+    path('reports/<int:pk>/delete/', views.discipline_report_delete, name='discipline_report_delete'),
 
     # --- User/Profile URLs (Examples - more needed) ---
     # Placeholder for viewing own profile - needs a view function `profile_view`

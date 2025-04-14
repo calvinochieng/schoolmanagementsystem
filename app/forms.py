@@ -5,6 +5,17 @@ from django.utils import timezone
 # Import your models (adjust path if needed)
 from .models import DisciplineReport, Student, ParentProfile, User # Import native User
 
+class StatusUpdateForm(forms.ModelForm):
+    """Form for updating the status of a discipline report."""
+    
+    class Meta:
+        model = DisciplineReport
+        fields = ['status']
+        widgets = {
+            'status': forms.Select(attrs={'class': 'select is-fullwidth'})
+        }
+
+
 # 1. Discipline Report Form
 class DisciplineReportForm(forms.ModelForm):
     """

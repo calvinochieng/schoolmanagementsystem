@@ -15,6 +15,29 @@
     <!-- Summary Stats -->
     <div class="column is-12">
         <div class="columns is-multiline is-mobile">
+            
+            <!-- Pending Reports -->
+            <div class="column is-12-mobile">
+                <div class="box has-background-warning-light has-shadow">
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <div>
+                                <p class="heading has-text-warning-dark has-text-weight-bold">Pending Reports</p>
+                                <p class="title has-text-warning-dark">{{ pending_reports }}</p>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="icon is-large has-text-warning-dark">
+                                <i class="fas fa-clipboard-list fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{% url 'discipline_report_list' %}?status=pending" class="is-size-7 has-text-warning-dark has-text-weight-bold">
+                        <span class="icon is-small"><i class="fas fa-arrow-right"></i></span>
+                        <span>View Pending Reports</span>
+                    </a>
+                </div>
+            </div>
             <!-- Total Students -->
             <div class="column is-12-mobile">
                 <div class="box has-background-primary-light has-shadow">
@@ -57,29 +80,6 @@
                     <a href="#" class="is-size-7 has-text-info has-text-weight-bold">
                         <span class="icon is-small"><i class="fas fa-arrow-right"></i></span>
                         <span>View All Parents</span>
-                    </a>
-                </div>
-            </div>
-            
-            <!-- Pending Reports -->
-            <div class="column is-12-mobile">
-                <div class="box has-background-warning-light has-shadow">
-                    <div class="level is-mobile">
-                        <div class="level-left">
-                            <div>
-                                <p class="heading has-text-warning-dark has-text-weight-bold">Pending Reports</p>
-                                <p class="title has-text-warning-dark">{{ pending_reports }}</p>
-                            </div>
-                        </div>
-                        <div class="level-right">
-                            <div class="icon is-large has-text-warning-dark">
-                                <i class="fas fa-clipboard-list fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                    <a href="{% url 'discipline_report_list' %}?status=pending" class="is-size-7 has-text-warning-dark has-text-weight-bold">
-                        <span class="icon is-small"><i class="fas fa-arrow-right"></i></span>
-                        <span>View Pending Reports</span>
                     </a>
                 </div>
             </div>

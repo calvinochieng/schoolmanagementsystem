@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+
+{% block title %}Discipline Reports - School Management Portal{% endblock %}
+
+{% block breadcrumb_items %}
+    <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+    <li class="is-active"><a href="{% url 'discipline_report_list' %}" aria-current="page">Discipline Reports</a></li>
+{% endblock %}
+
+{% block page_icon %}<span class="icon is-medium mr-2"><i class="fas fa-clipboard-list"></i></span>{% endblock %}
+{% block page_title %}Discipline Reports{% endblock %}
+{% block page_subtitle %}Manage and track student discipline incidents{% endblock %}
+
+{% block content %}
+<div class="columns is-multiline">
+    <!-- Filter Options -->
+    <div class="column is-12">
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-filter"></i></span>
+                    Filter Reports
+                </p>
+                <button class="card-header-icon" aria-label="expand filters" id="toggle-filters">
+                    <span class="icon">
+                        <i class="fas fa-angle-down"></i>
+                    </span>
+                </button>
+            </header>
+            <div class="card-content" id="filter-content">
+                <form method="get" action="{% url 'discipline_report_list' %}">
+                    <div class="columns is-multiline">
+                        <div class="column is-4">
+                            <div class="field">
+                                <label class="label">Status</label>
+                                <div class="control">
+                                    <div class="select is-fullwidth">
+                                        <select name="status">
+                                            <option value="">All Statuses</option>
+                                            {% for status_value, status_name in status_choices %}
+                                                <option value="{{ status_value }}" {% if current_status == status_value %}selected{% endif %}>
+                                                    {{ status_name }}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-4">
+                            <div class="field">
+                                <label class="label">Student</label>
+                                <div class="control">
+                                    <input class="input" type="text" name="student_id" placeholder="Student ID" value="{{ current_student_id|default:'' }}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-4 is-flex is-align-items-flex-end">
+                            <div class="field is-grouped">
+                                <div class="control">
+                                    <button type="submit" class="button is-primary">
+                                        <span class="icon is-small"><i class="fas fa-search"></i></span>
+                                        <span>Apply Filters</span>
+                                    </button>
+                                </div>
+                                <div class="control">
+                                    <a href="{% url 'discipline_report_list' %}" class="button is-light">
+                                        <span class="icon is-small"><i class="fas fa-times"></i></span>
+                                        <span>Clear</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports List -->
+    <div class="column is-12 mt-4">
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-clipboard-list"></i></span>
+                    Discipline Reports
+                </p>
+                <a href="/admin/app/disciplinereport/add/" class="card-header-icon" aria-label="add new">
+                    <span class="icon has-text-primary">
+                        <i class="fas fa-plus"></i>
+                    </span>
+                </a>
+            </header>
+            <div class="card-content">
+                <div class="table-container">
+                    <table class="table is-fullwidth is-hoverable is-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Student</th>
+                                <th>Title</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+                                <th>Added By</th>
+                                <th class="has-text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in page_obj %}
+                            <tr>
+                                <td>{{ report.date|date:"M d, Y" }}</td>
+                                <td>
+                                    <a href="{% url 'student_detail' report.student.id %}" class="has-text-weight-medium">
+                                        {{ report.student.name }}
+                                    </a>
+                                </td>
+                                <td>{{ report.title }}</td>
+                                <td>
+                                    {% if report.severity == 'minor' %}
+                                        <span class="tag is-warning is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-exclamation"></i></span>
+                                            Minor
+                                        </span>
+                                    {% elif report.severity == 'moderate' %}
+                                        <span class="tag is-warning">
+                                            <span class="icon is-small mr-1"><i class="fas fa-exclamation-circle"></i></span>
+                                            Moderate
+                                        </span>
+                                    {% elif report.severity == 'serious' %}
+                                        <span class="tag is-danger is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-exclamation-triangle"></i></span>
+                                            Serious
+                                        </span>
+                                    {% elif report.severity == 'critical' %}
+                                        <span class="tag is-danger">
+                                            <span class="icon is-small mr-1"><i class="fas fa-radiation"></i></span>
+                                            Critical
+                                        </span>
+                                    {% else %}
+                                        <span class="tag is-severity-{{ report.severity|lower }}">
+                                            {{ report.get_severity_display }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if report.status == 'pending' %}
+                                        <span class="tag is-warning is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-clock"></i></span>
+                                            Pending
+                                        </span>
+                                    {% elif report.status == 'in_progress' %}
+                                        <span class="tag is-info is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-spinner"></i></span>
+                                            In Progress
+                                        </span>
+                                    {% elif report.status == 'resolved' %}
+                                        <span class="tag is-success is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-check"></i></span>
+                                            Resolved
+                                        </span>
+                                    {% else %}
+                                        <span class="tag is-status-{{ report.status|lower }}">
+                                            {{ report.get_status_display }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ report.added_by.get_full_name|default:report.added_by.username }}</td>
+                                <td class="has-text-right">
+                                    <div class="buttons is-right">
+                                        <a href="{% url 'discipline_report_detail' report.id %}" class="button is-small is-primary is-outlined">
+                                            <span class="icon is-small">
+                                                <i class="fas fa-eye"></i>
+                                            </span>
+                                            <span>View</span>
+                                        </a>
+                                        {% if user.is_superuser or user == report.added_by %}
+                                        <a href="/admin/app/disciplinereport/{{report.id}}/change/" class="button is-small is-info is-outlined">
+                                            <span class="icon is-small">
+                                                <i class="fas fa-edit"></i>
+                                            </span>
+                                            <span>Edit</span>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="has-text-centered py-5">
+                                    <p class="has-text-grey mb-4">No discipline reports found</p>
+                                    <a href="/admin/app/disciplinereport/add/" class="button is-small is-primary">
+                                        <span class="icon is-small">
+                                            <i class="fas fa-plus"></i>
+                                        </span>
+                                        <span>Create New Report</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <footer class="card-footer">
+                <div class="card-footer-item">
+                    <nav class="pagination is-centered" role="navigation" aria-label="pagination">
+                        {% if page_obj.has_previous %}
+                            <a href="?page={{ page_obj.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_student_id %}&student_id={{ current_student_id }}{% endif %}" 
+                               class="pagination-previous">
+                                <span class="icon is-small"><i class="fas fa-chevron-left"></i></span>
+                            </a>
+                        {% else %}
+                            <a class="pagination-previous" disabled>
+                                <span class="icon is-small"><i class="fas fa-chevron-left"></i></span>
+                            </a>
+                        {% endif %}
+                        
+                        {% if page_obj.has_next %}
+                            <a href="?page={{ page_obj.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_student_id %}&student_id={{ current_student_id }}{% endif %}" 
+                               class="pagination-next">
+                                <span class="icon is-small"><i class="fas fa-chevron-right"></i></span>
+                            </a>
+                        {% else %}
+                            <a class="pagination-next" disabled>
+                                <span class="icon is-small"><i class="fas fa-chevron-right"></i></span>
+                            </a>
+                        {% endif %}
+                        
+                        <ul class="pagination-list">
+                            {% for i in page_obj.paginator.page_range %}
+                                {% if page_obj.number == i %}
+                                    <li><a class="pagination-link is-current" aria-label="Page {{ i }}" aria-current="page">{{ i }}</a></li>
+                                {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                    <li><a href="?page={{ i }}{% if current_status %}&status={{ current_status }}{% endif %}{% if current_student_id %}&student_id={{ current_student_id }}{% endif %}" 
+                                       class="pagination-link" aria-label="Page {{ i }}">{{ i }}</a></li>
+                                {% endif %}
+                            {% endfor %}
+                        </ul>
+                    </nav>
+                </div>
+            </footer>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="column is-12 mt-4">
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-bolt"></i></span>
+                    Quick Actions
+                </p>
+            </header>
+            <div class="card-content">
+                <div class="buttons">
+                    <a href="/admin/app/disciplinereport/add/" class="button is-primary">
+                        <span class="icon"><i class="fas fa-plus"></i></span>
+                        <span>New Discipline Report</span>
+                    </a>
+                    <a href="{% url 'student_list' %}" class="button is-info">
+                        <span class="icon"><i class="fas fa-user-graduate"></i></span>
+                        <span>Manage Students</span>
+                    </a>
+                    <a href="{% url 'dashboard' %}" class="button is-link">
+                        <span class="icon"><i class="fas fa-tachometer-alt"></i></span>
+                        <span>Dashboard</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add additional CSS/JS for better functionality -->
+<style>
+    .has-shadow {
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+    
+    .has-shadow:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .card {
+        box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+    
+    .table thead th {
+        color: #4a4a4a;
+        font-weight: 600;
+    }
+    
+    @media screen and (max-width: 768px) {
+        .notification, .box {
+            padding: 1rem;
+        }
+        
+        .buttons.is-right {
+            justify-content: flex-end;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle filters panel
+        const toggleButton = document.getElementById('toggle-filters');
+        const filterContent = document.getElementById('filter-content');
+        
+        toggleButton.addEventListener('click', function() {
+            const isExpanded = toggleButton.getAttribute('aria-expanded') === 'true';
+            toggleButton.setAttribute('aria-expanded', !isExpanded);
+            
+            if (isExpanded) {
+                filterContent.style.display = 'none';
+                toggleButton.querySelector('i').classList.remove('fa-angle-up');
+                toggleButton.querySelector('i').classList.add('fa-angle-down');
+            } else {
+                filterContent.style.display = 'block';
+                toggleButton.querySelector('i').classList.remove('fa-angle-down');
+                toggleButton.querySelector('i').classList.add('fa-angle-up');
+            }
+        });
+    });
+</script>
+{% endblock %}

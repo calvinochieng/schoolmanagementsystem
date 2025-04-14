@@ -11,7 +11,7 @@ from django.http import HttpResponseForbidden, HttpResponse
 
 from .models import *
 
-from .forms import DisciplineReportForm
+from .forms import DisciplineReportForm, StatusUpdateForm
 
 
 # --- Index View ---
@@ -278,12 +278,183 @@ def student_detail_view(request, student_id):
     
     return render(request, 'student/student_detail.html', context)
 
+
+
+# ///////
+
 @login_required
 def discipline_report_detail_view(request, pk):
-    # TODO: Implement actual report detail logic
-    report = get_object_or_404(DisciplineReport, pk=pk)
-    # Check permissions if needed (e.g., only staff or parent of student involved)
-    return HttpResponse(f"<h1>Placeholder for Report Detail: {report.title} (ID: {pk})</h1>")
+    """
+    Detailed view of a specific discipline report.
+    Shows report information, student details, and provides actions based on user permissions.
+    
+    Staff users can see all reports and update their status.
+    Parent users can only see reports related to their children.
+    """
+    # Get the report or return 404
+    report = get_object_or_404(DisciplineReport.objects.select_related(
+        'student', 'added_by'
+    ).prefetch_related(
+        'student__parent_profiles',
+        'student__parent_profiles__user'
+    ), pk=pk, is_deleted=False)
+    
+    # Check permissions
+    user = request.user
+    has_access = False
+    
+    if user.is_staff:
+        has_access = True
+    elif hasattr(user, 'parent_profile'):
+        # Check if this report is for the parent's student
+        has_access = user.parent_profile.student == report.student
+    
+    if not has_access:
+        raise PermissionDenied("You don't have permission to view this report.")
+    
+    # Handle status update form submission (staff only)
+    if request.method == 'POST' and user.is_staff and 'status' in request.POST:
+        previous_status = report.status
+        form = StatusUpdateForm(request.POST, instance=report)
+        
+        if form.is_valid():
+            # Save the updated report
+            updated_report = form.save(commit=False)
+            updated_report.updated_at = timezone.now()
+            updated_report.save()
+            
+            # Add status change comment if provided
+            status_comment = request.POST.get('status_comment', '').strip()
+            if status_comment:
+                # This assumes you have a StatusUpdate model or similar
+                # If not, you could append to the report's comment field instead
+                from .models import StatusUpdate  # Import here to avoid circular imports
+                StatusUpdate.objects.create(
+                    report=report,
+                    previous_status=previous_status,
+                    new_status=updated_report.status,
+                    comment=status_comment,
+                    updated_by=user
+                )
+            
+            messages.success(request, f"Report status updated to {report.get_status_display()}")
+            return redirect('discipline_report_detail', pk=pk)
+        else:
+            messages.error(request, "Error updating status. Please check the form.")
+    else:
+        form = StatusUpdateForm(instance=report)
+    
+    # Check if the user can edit/delete this report
+    can_edit = user.is_staff
+    can_delete = user.is_superuser or user == report.added_by
+    
+    context = {
+        'report': report,
+        'status_choices': DisciplineReport.STATUS_CHOICES,
+        'severity_choices': DisciplineReport.SEVERITY_CHOICES,
+        'can_edit': can_edit,
+        'can_delete': can_delete,
+        'form': form,
+        # Include any status updates history if you've implemented that
+        'status_updates': report.status_updates.order_by('-created_at') if hasattr(report, 'status_updates') else None,
+    }
+    
+    return render(request, 'discipline/discipline_report_detail.html', context)
+
+
+@login_required
+def discipline_report_update_status(request, pk):
+    """
+    Handle status updates independently from the main detail view.
+    This allows for a cleaner separation of concerns and easier testing.
+    """
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Only staff members can update report status.")
+    
+    if request.method != 'POST':
+        return redirect('discipline_report_detail', pk=pk)
+    
+    report = get_object_or_404(DisciplineReport, pk=pk, is_deleted=False)
+    previous_status = report.status
+    
+    # Update the status
+    new_status = request.POST.get('status')
+    if new_status and new_status in dict(DisciplineReport.STATUS_CHOICES):
+        report.status = new_status
+        report.updated_at = timezone.now()
+        report.save()
+        
+        # Handle status comment if provided
+        status_comment = request.POST.get('status_comment', '').strip()
+        if status_comment:
+            # If you have a StatusUpdate model:
+            try:
+                from .models import StatusUpdate
+                StatusUpdate.objects.create(
+                    report=report,
+                    previous_status=previous_status,
+                    new_status=new_status,
+                    comment=status_comment,
+                    updated_by=request.user
+                )
+            except ImportError:
+                # Otherwise append to report comment
+                if report.comment:
+                    report.comment += f"\n\n[Status Update by {request.user.get_full_name() or request.user.username} on {timezone.now().strftime('%Y-%m-%d %H:%M')}]\n"
+                else:
+                    report.comment = f"[Status Update by {request.user.get_full_name() or request.user.username} on {timezone.now().strftime('%Y-%m-%d %H:%M')}]\n"
+                
+                report.comment += f"Status changed from {dict(DisciplineReport.STATUS_CHOICES)[previous_status]} to {dict(DisciplineReport.STATUS_CHOICES)[new_status]}.\n"
+                report.comment += f"Comment: {status_comment}"
+                report.save()
+        
+        messages.success(request, f"Report status updated to {report.get_status_display()}")
+    else:
+        messages.error(request, "Invalid status value provided.")
+    
+    return redirect('discipline_report_detail', pk=pk)
+
+
+@login_required
+def discipline_report_delete(request, pk):
+    """
+    Soft delete a discipline report (mark as deleted).
+    Only superusers or the report creator can delete.
+    """
+    report = get_object_or_404(DisciplineReport, pk=pk, is_deleted=False)
+    
+    # Check permissions
+    if not (request.user.is_superuser or request.user == report.added_by):
+        return HttpResponseForbidden("You don't have permission to delete this report.")
+    
+    if request.method == 'POST':
+        # Soft delete
+        report.is_deleted = True
+        report.save()
+        messages.success(request, "Discipline report has been deleted.")
+        return redirect('discipline_report_list')
+    
+    # If not POST, redirect back to detail view
+    return redirect('discipline_report_detail', pk=pk)
+
+
+@login_required
+def discipline_report_edit(request, pk):
+    """
+    Edit an existing discipline report.
+    Only staff members can edit reports.
+    """
+    # This is a placeholder function - you would need to implement the full form handling
+    # Including the form class and template
+    if not request.user.is_staff:
+        return HttpResponseForbidden("Only staff members can edit reports.")
+    
+    report = get_object_or_404(DisciplineReport, pk=pk, is_deleted=False)
+    
+    # Redirect to the actual edit view or render edit form
+    # For now we'll just redirect back to the detail page
+    messages.info(request, "Edit functionality to be implemented.")
+    return redirect('discipline_report_detail', pk=pk)
 
 
 # Add more placeholders as needed for edit/delete/profile/etc.

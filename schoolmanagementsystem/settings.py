@@ -8,7 +8,7 @@ SECRET_KEY = 'django-insecure-1dbj@569^_z3w2xhszqhl18%k&arlpe3v9zor#qg_a5olq-6)6
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["127.0.0.1", "schoolmanagementsystem-a0cm.onrender.com"]
 
 
 # Application definition
