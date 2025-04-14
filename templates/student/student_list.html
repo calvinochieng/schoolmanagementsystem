@@ -1,0 +1,269 @@
+{% extends 'base.html' %}
+
+{% block title %}Students - School Management Portal{% endblock %}
+
+{% block breadcrumb_items %}
+    <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+    <li class="is-active"><a href="{% url 'student_list' %}" aria-current="page">Students</a></li>
+{% endblock %}
+
+{% block page_icon %}<span class="icon is-medium mr-2"><i class="fas fa-user-graduate"></i></span>{% endblock %}
+{% block page_title %}Students{% endblock %}
+{% block page_subtitle %}Manage all student records{% endblock %}
+
+{% block content %}
+<div class="columns">
+    <div class="column is-12">
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-list"></i></span>
+                    Student Directory
+                    {% if search_query %}
+                    <span class="ml-2 tag is-info">
+                        Search: "{{ search_query }}"
+                    </span>
+                    {% endif %}
+                </p>
+                <div class="card-header-icon">
+                    <a href="/admin/app/student/add/" class="button is-small is-primary">
+                        <span class="icon is-small">
+                            <i class="fas fa-plus"></i>
+                        </span>
+                        <span>New Student</span>
+                    </a>
+                </div>
+            </header>
+            <div class="card-content">
+                <!-- Search and Filter Controls -->
+                <form method="GET" action="{% url 'student_list' %}">
+                    <div class="field has-addons mb-5">
+                        <div class="control is-expanded">
+                            <input class="input" type="text" name="search" placeholder="Search students by name or enrollment number..." value="{{ search_query }}">
+                        </div>
+                        <div class="control">
+                            <button type="submit" class="button is-info">
+                                <span class="icon is-small">
+                                    <i class="fas fa-search"></i>
+                                </span>
+                                <span>Search</span>
+                            </button>
+                        </div>
+                        {% if search_query %}
+                        <div class="control">
+                            <a href="{% url 'student_list' %}" class="button is-light">
+                                <span class="icon is-small">
+                                    <i class="fas fa-times"></i>
+                                </span>
+                                <span>Clear</span>
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </form>
+                
+                <!-- Search results summary if searching -->
+                {% if search_query %}
+                <div class="notification is-light is-info mb-5">
+                    <p>
+                        <span class="icon"><i class="fas fa-info-circle"></i></span>
+                        Found <strong>{{ total_count }}</strong> students matching your search for "<strong>{{ search_query }}</strong>"
+                    </p>
+                </div>
+                {% endif %}
+                
+                <!-- Students Table -->
+                <div class="table-container">
+                    <table class="table is-fullwidth is-hoverable is-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Enrollment #</th>
+                                <th>Grade</th>
+                                <th>Gender</th>
+                                <th>Enrollment Date</th>
+                                <th>Added By</th>
+                                <th class="has-text-centered">Reports</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for student in page_obj %}
+                            <tr>
+                                <td>
+                                    <a href="{% url 'student_detail' student.id %}" class="has-text-weight-medium">
+                                        {{ student.name }}
+                                    </a>
+                                </td>
+                                <td>{{ student.enrollment_number }}</td>
+                                <td>{{ student.grade }}</td>
+                                <td>{{ student.gender }}</td>
+                                <td>{{ student.enrollment_date|date:"M d, Y" }}</td>
+                                <td>
+                                    {% if student.enrolled_by %}
+                                        {{ student.enrolled_by.get_full_name|default:student.enrolled_by.username }}
+                                    {% else %}
+                                        <span class="has-text-grey-light">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="has-text-centered">
+                                    {% with report_count=student.discipline_reports.count %}
+                                    {% if report_count > 0 %}
+                                        <a href="{% url 'discipline_report_list' %}?student={{ student.id }}" class="tag {% if report_count > 5 %}is-danger{% elif report_count > 2 %}is-warning{% else %}is-info{% endif %}">
+                                            {{ report_count }}
+                                        </a>
+                                    {% else %}
+                                        <span class="tag is-light">0</span>
+                                    {% endif %}
+                                    {% endwith %}
+                                </td>
+                                <td class="has-text-right">
+                                    <div class="buttons is-right are-small">
+                                        <a href="{% url 'student_detail' student.id %}" class="button is-small is-primary is-outlined">
+                                            <span class="icon is-small">
+                                                <i class="fas fa-eye"></i>
+                                            </span>
+                                            <span>View</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="8" class="has-text-centered py-5">
+                                    {% if search_query %}
+                                    <p class="has-text-grey mb-4">No students found matching "{{ search_query }}"</p>
+                                    <a href="{% url 'student_list' %}" class="button is-small is-info">
+                                        <span class="icon is-small">
+                                            <i class="fas fa-arrow-left"></i>
+                                        </span>
+                                        <span>Back to All Students</span>
+                                    </a>
+                                    {% else %}
+                                    <p class="has-text-grey mb-4">No students found</p>
+                                    <a href="/admin/app/student/add/" class="button is-small is-primary">
+                                        <span class="icon is-small">
+                                            <i class="fas fa-plus"></i>
+                                        </span>
+                                        <span>Add First Student</span>
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination with search query preserved -->
+                {% if page_obj.has_other_pages %}
+                <nav class="pagination is-centered mt-5" role="navigation" aria-label="pagination">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-previous">
+                        <span class="icon is-small">
+                            <i class="fas fa-chevron-left"></i>
+                        </span>
+                        <span>Previous</span>
+                    </a>
+                    {% else %}
+                    <a class="pagination-previous" disabled>
+                        <span class="icon is-small">
+                            <i class="fas fa-chevron-left"></i>
+                        </span>
+                        <span>Previous</span>
+                    </a>
+                    {% endif %}
+                    
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-next">
+                        <span>Next</span>
+                        <span class="icon is-small">
+                            <i class="fas fa-chevron-right"></i>
+                        </span>
+                    </a>
+                    {% else %}
+                    <a class="pagination-next" disabled>
+                        <span>Next</span>
+                        <span class="icon is-small">
+                            <i class="fas fa-chevron-right"></i>
+                        </span>
+                    </a>
+                    {% endif %}
+                    
+                    <ul class="pagination-list">
+                        {% if page_obj.number > 3 %}
+                        <li><a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-link">1</a></li>
+                        <li><span class="pagination-ellipsis">&hellip;</span></li>
+                        {% endif %}
+                        
+                        {% for i in page_obj.paginator.page_range %}
+                            {% if i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                            <li>
+                                <a href="?page={{ i }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-link {% if i == page_obj.number %}is-current{% endif %}">
+                                    {{ i }}
+                                </a>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.number < page_obj.paginator.num_pages|add:'-2' %}
+                        <li><span class="pagination-ellipsis">&hellip;</span></li>
+                        <li>
+                            <a href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}" class="pagination-link">
+                                {{ page_obj.paginator.num_pages }}
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+            <footer class="card-footer">
+                <a href="#" class="card-footer-item has-text-primary">
+                    <span class="icon"><i class="fas fa-download"></i></span>
+                    <span>Export Students</span>
+                </a>
+                <a href="#" class="card-footer-item has-text-info">
+                    <span class="icon"><i class="fas fa-upload"></i></span>
+                    <span>Import Students</span>
+                </a>
+            </footer>
+        </div>
+    </div>
+</div>
+
+<!-- Additional CSS to match dashboard styles -->
+<style>
+    .has-shadow {
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+    
+    .has-shadow:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .card {
+        box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    
+    .table thead th {
+        color: #4a4a4a;
+        font-weight: 600;
+    }
+    
+    @media screen and (max-width: 768px) {
+        .notification, .box {
+            padding: 1rem;
+        }
+        
+        .buttons.is-right {
+            justify-content: flex-end;
+        }
+    }
+</style>
+{% endblock %}

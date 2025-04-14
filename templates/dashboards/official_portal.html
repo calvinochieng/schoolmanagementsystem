@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - School Management Portal{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="is-active"><a href="{% url 'dashboard' %}" aria-current="page">Dashboard</a></li>
+{% endblock %}
+
+{% block page_icon %}<span class="icon is-medium mr-2"><i class="fas fa-tachometer-alt"></i></span>{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Overview of school discipline system metrics and recent activity{% endblock %}
+
+{% block content %}
+<div class="columns is-multiline">
+    <!-- Summary Stats -->
+    <div class="column is-12">
+        <div class="columns is-multiline is-mobile">
+            <!-- Total Students -->
+            <div class="column is-12-mobile">
+                <div class="box has-background-primary-light has-shadow">
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <div>
+                                <p class="heading has-text-primary has-text-weight-bold">Total Students</p>
+                                <p class="title has-text-primary">{{ student_count }}</p>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="icon is-large has-text-primary">
+                                <i class="fas fa-user-graduate fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{% url 'student_list' %}" class="is-size-7 has-text-primary has-text-weight-bold">
+                        <span class="icon is-small"><i class="fas fa-arrow-right"></i></span>
+                        <span>View All Students</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Parent Accounts -->
+            <div class="column is-12-mobile">
+                <div class="box has-background-info-light has-shadow">
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <div>
+                                <p class="heading has-text-info has-text-weight-bold">Parent Accounts</p>
+                                <p class="title has-text-info">{{ parent_count }}</p>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="icon is-large has-text-info">
+                                <i class="fas fa-users fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="#" class="is-size-7 has-text-info has-text-weight-bold">
+                        <span class="icon is-small"><i class="fas fa-arrow-right"></i></span>
+                        <span>View All Parents</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Pending Reports -->
+            <div class="column is-12-mobile">
+                <div class="box has-background-warning-light has-shadow">
+                    <div class="level is-mobile">
+                        <div class="level-left">
+                            <div>
+                                <p class="heading has-text-warning-dark has-text-weight-bold">Pending Reports</p>
+                                <p class="title has-text-warning-dark">{{ pending_reports }}</p>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="icon is-large has-text-warning-dark">
+                                <i class="fas fa-clipboard-list fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <a href="{% url 'discipline_report_list' %}?status=pending" class="is-size-7 has-text-warning-dark has-text-weight-bold">
+                        <span class="icon is-small"><i class="fas fa-arrow-right"></i></span>
+                        <span>View Pending Reports</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Discipline Reports -->
+    <div class="column is-12  mt-5 is-7-widescreen">
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-clipboard-list"></i></span>
+                    Recent Discipline Reports
+                </p>
+                <a href="{% url 'discipline_report_list' %}" class="card-header-icon" aria-label="view all">
+                    <span class="icon">
+                        <i class="fas fa-external-link-alt"></i>
+                    </span>
+                </a>
+            </header>
+            <div class="card-content">
+                <div class="table-container">
+                    <table class="table is-fullwidth is-hoverable is-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Student</th>
+                                <th>Title</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in recent_reports %}
+                            <tr>
+                                <td>{{ report.date|date:"M d, Y" }}</td>
+                                <td>
+                                    <a href="{% url 'student_detail' report.student.id %}" class="has-text-weight-medium">
+                                        {{ report.student.name }}
+                                    </a>
+                                </td>
+                                <td>{{ report.title }}</td>
+                                <td>
+                                    {% if report.severity == 'minor' %}
+                                        <span class="tag is-warning is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-exclamation"></i></span>
+                                            Minor
+                                        </span>
+                                    {% elif report.severity == 'moderate' %}
+                                        <span class="tag is-warning">
+                                            <span class="icon is-small mr-1"><i class="fas fa-exclamation-circle"></i></span>
+                                            Moderate
+                                        </span>
+                                    {% elif report.severity == 'serious' %}
+                                        <span class="tag is-danger is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-exclamation-triangle"></i></span>
+                                            Serious
+                                        </span>
+                                    {% elif report.severity == 'critical' %}
+                                        <span class="tag is-danger">
+                                            <span class="icon is-small mr-1"><i class="fas fa-radiation"></i></span>
+                                            Critical
+                                        </span>
+                                    {% else %}
+                                        <span class="tag is-severity-{{ report.severity|lower }}">
+                                            {{ report.get_severity_display }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if report.status == 'pending' %}
+                                        <span class="tag is-warning is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-clock"></i></span>
+                                            Pending
+                                        </span>
+                                    {% elif report.status == 'in_progress' %}
+                                        <span class="tag is-info is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-spinner"></i></span>
+                                            In Progress
+                                        </span>
+                                    {% elif report.status == 'resolved' %}
+                                        <span class="tag is-success is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-check"></i></span>
+                                            Resolved
+                                        </span>
+                                    {% else %}
+                                        <span class="tag is-status-{{ report.status|lower }}">
+                                            {{ report.get_status_display }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="has-text-right">
+                                    <a href="{% url 'discipline_report_detail' report.id %}" class="button is-small is-outlined is-primary">
+                                        <span class="icon is-small">
+                                            <i class="fas fa-eye"></i>
+                                        </span>
+                                        <span>View</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="has-text-centered py-5">
+                                    <p class="has-text-grey mb-4">No recent reports</p>
+                                    <a href="/admin/app/disciplinereport/add/" class="button is-small is-primary">
+                                        <span class="icon is-small">
+                                            <i class="fas fa-plus"></i>
+                                        </span>
+                                        <span>Create New Report</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <footer class="card-footer">
+                <a href="/admin/app/disciplinereport/add/" class="card-footer-item has-text-primary">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>New Report</span>
+                </a>
+                <a href="{% url 'discipline_report_list' %}" class="card-footer-item has-text-info">
+                    <span class="icon"><i class="fas fa-list"></i></span>
+                    <span>View All</span>
+                </a>
+            </footer>
+        </div>
+    </div>
+    
+    {% if user.is_superuser %}
+    <!-- Admin Stats (Only visible to superusers) -->
+    <div class="column is-12 mt-5 is-5-widescreen">
+        <div class="columns is-multiline is-mobile card">
+            <h4 class="title is-5 column is-12">
+                <span class="icon is-small mr-2"><i class="fas fa-shield-alt"></i></span>
+                <span>Administrative Overview</span>
+            </h4>
+            <div class="column is-6-mobile">
+                <div class="box " style="box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.01);">
+                    <p class="heading has-text-grey-dark has-text-weight-bold">Admin Users</p>
+                    <p class="title is-4 has-text-grey-dark">{{ admin_count }}</p>
+                </div>
+            </div>
+            <div class="column is-6-mobile">
+                <div class="box" style="box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.01);">
+                    <p class="heading has-text-grey-dark has-text-weight-bold">Staff Users</p>
+                    <p class="title is-4 has-text-grey-dark">{{ staff_count }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if user.is_superuser %}
+<!-- Quick Actions for Admins -->
+<div class="columns mt-5">
+    <div class="column">
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-bolt"></i></span>
+                    Quick Actions
+                </p>
+            </header>
+            <div class="card-content">
+                <div class="buttons">
+                    <a href="/admin/app/disciplinereport/add/" class="button is-primary">
+                        <span class="icon"><i class="fas fa-plus"></i></span>
+                        <span>New Discipline Report</span>
+                    </a>
+                    <a href="{% url 'student_list' %}" class="button is-info">
+                        <span class="icon"><i class="fas fa-user-graduate"></i></span>
+                        <span>Manage Students</span>
+                    </a>
+                    <a href="/admin/app/parentprofile/add/" class="button is-success">
+                        <span class="icon"><i class="fas fa-user-plus"></i></span>
+                        <span>Add Parent Account</span>
+                    </a>
+                    <a href="{% url "discipline_report_list" %}" class="button is-link">
+                        <span class="icon"><i class="fas fa-chart-bar"></i></span>
+                        <span>View Reports</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Add additional CSS for better styling -->
+<style>
+    .has-shadow {
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+    
+    .has-shadow:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .timeline {
+        list-style-type: none;
+        padding-left: 0;
+    }
+    
+    .card {
+        box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
+        border-radius: 6px;
+        overflow: hidden;
+    }
+    
+    .table thead th {
+        color: #4a4a4a;
+        font-weight: 600;
+    }
+    
+    @media screen and (max-width: 768px) {
+        .notification, .box {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}

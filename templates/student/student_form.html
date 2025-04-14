@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if student.id %}Edit Student{% else %}Add New Student{% endif %} - School Management Portal
+{% endblock %}
+
+{% block page_title %}
+    {% if student.id %}Edit Student: {{ student.name }}{% else %}Add New Student{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="columns is-centered">
+    <div class="column is-8">
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2">
+                        <i class="fas fa-{% if student.id %}edit{% else %}plus{% endif %}"></i>
+                    </span>
+                    {% if student.id %}Update Student Information{% else %}Enter Student Information{% endif %}
+                </p>
+            </header>
+            <div class="card-content">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="notification is-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="field">
+                        <label class="label" for="{{ form.name.id_for_label }}">Full Name*</label>
+                        <div class="control has-icons-left">
+                            {{ form.name }}
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </div>
+                        {% if form.name.errors %}
+                        <p class="help is-danger">{{ form.name.errors }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="columns">
+                        <div class="column">
+                            <div class="field">
+                                <label class="label" for="{{ form.grade.id_for_label }}">Grade*</label>
+                                <div class="control has-icons-left">
+                                    <div class="select is-fullwidth">
+                                        {{ form.grade }}
+                                    </div>
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-graduation-cap"></i>
+                                    </span>
+                                </div>
+                                {% if form.grade.errors %}
+                                <p class="help is-danger">{{ form.grade.errors }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="column">
+                            <div class="field">
+                                <label class="label" for="{{ form.gender.id_for_label }}">Gender*</label>
+                                <div class="control has-icons-left">
+                                    <div class="select is-fullwidth">
+                                        {{ form.gender }}
+                                    </div>
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-venus-mars"></i>
+                                    </span>
+                                </div>
+                                {% if form.gender.errors %}
+                                <p class="help is-danger">{{ form.gender.errors }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <label class="label" for="{{ form.enrollment_date.id_for_label }}">Enrollment Date*</label>
+                        <div class="control has-icons-left">
+                            {{ form.enrollment_date }}
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-calendar"></i>
+                            </span>
+                        </div>
+                        {% if form.enrollment_date.errors %}
+                        <p class="help is-danger">{{ form.enrollment_date.errors }}</p>
+                        {% endif %}
+                        <p class="help">Format: YYYY-MM-DD</p>
+                    </div>
+                    
+                    {% if user.role == 'admin' %}
+                    <div class="field">
+                        <label class="label" for="{{ form.enrolled_by.id_for_label }}">Enrolled By</label>
+                        <div class="control has-icons-left">
+                            <div class="select is-fullwidth">
+                                {{ form.enrolled_by }}
+                            </div>
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-user-tie"></i>
+                            </span>
+                        </div>
+                        {% if form.enrolled_by.errors %}
+                        <p class="help is-danger">{{ form.enrolled_by.errors }}</p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="field is-grouped mt-5">
+                        <div class="control">
+                            <button type="submit" class="button is-primary">
+                                <span class="icon">
+                                    <i class="fas fa-save"></i>
+                                </span>
+                                <span>{% if student.id %}Update{% else %}Create{% endif %} Student</span>
+                            </button>
+                        </div>
+                        <div class="control">
+                            <a href="{% if student.id %}{% url 'student_detail' student.id %}{% else %}{% url 'student_list' %}{% endif %}" class="button is-light">
+                                Cancel
+                            </a>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Add Bulma classes to form inputs
+        const nameInput = document.getElementById('{{ form.name.id_for_label }}');
+        const enrollmentDateInput = document.getElementById('{{ form.enrollment_date.id_for_label }}');
+        
+        if (nameInput) {
+            nameInput.classList.add('input');
+        }
+        
+        if (enrollmentDateInput) {
+            enrollmentDateInput.classList.add('input');
+            enrollmentDateInput.type = 'date';
+        }
+    });
+</script>
+{% endblock %}

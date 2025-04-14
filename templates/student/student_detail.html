@@ -1,0 +1,412 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ student.name }} - Student Detail{% endblock %}
+
+{% block breadcrumb_items %}
+    <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+    <li><a href="{% url 'student_list' %}">Students</a></li>
+    <li class="is-active"><a href="#" aria-current="page">{{ student.name }}</a></li>
+{% endblock %}
+
+{% block page_icon %}<span class="icon is-medium mr-2"><i class="fas fa-user-graduate"></i></span>{% endblock %}
+{% block page_title %}Student Profile{% endblock %}
+{% block page_subtitle %}Viewing detailed information for {{ student.name }}{% endblock %}
+
+{% block content %}
+<div class="columns is-multiline">
+    <!-- Student Profile Card -->
+    <div class="column is-4">
+        <div class="card has-shadow">
+            <div class="card-content">
+                <div class="has-text-centered mb-5">
+                    <figure class="image is-96x96 is-inline-block">
+                        <img 
+                            src="https://ui-avatars.com/api/?name={{ student.name }}&background=4a77df&color=fff&size=96" 
+                            alt="{{ student.name }}" 
+                            class="is-rounded"
+                        >
+                    </figure>
+                    <h2 class="title is-4 mt-3">{{ student.name }}</h2>
+                    <p class="subtitle is-6">{{ student.grade }}</p>
+                    
+                    <!-- Student enrollment number badge -->
+                    <div class="tags is-centered mt-2">
+                        <span class="tag is-primary is-medium">
+                            <span class="icon"><i class="fas fa-id-card"></i></span>
+                            <span>{{ student.enrollment_number }}</span>
+                        </span>
+                    </div>
+                </div>
+                
+                <div class="content">
+                    <div class="field">
+                        <label class="label">Gender</label>
+                        <div class="control">
+                            <input class="input" type="text" value="{{ student.gender }}" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <label class="label">Enrollment Date</label>
+                        <div class="control">
+                            <input class="input" type="text" value="{{ student.enrollment_date|date:'M d, Y' }}" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <label class="label">Enrolled By</label>
+                        <div class="control">
+                            {% if student.enrolled_by %}
+                                <input class="input" type="text" value="{{ student.enrolled_by.get_full_name|default:student.enrolled_by.username }}" readonly>
+                            {% else %}
+                                <input class="input" type="text" value="Not specified" readonly>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <label class="label">Created</label>
+                        <div class="control">
+                            <input class="input" type="text" value="{{ student.created_at|date:'M d, Y H:i' }}" readonly>
+                        </div>
+                    </div>
+                    
+                    <div class="field">
+                        <label class="label">Last Updated</label>
+                        <div class="control">
+                            <input class="input" type="text" value="{{ student.updated_at|date:'M d, Y H:i' }}" readonly>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="buttons">
+                    <a href="{% url 'student_list' %}" class="button is-light is-fullwidth">
+                        <span class="icon">
+                            <i class="fas fa-arrow-left"></i>
+                        </span>
+                        <span>Back to Students</span>
+                    </a>
+                    {% if user.is_staff %}
+                    <a href="/admin/app/student/{{student.id}}/change/" class="button is-info is-fullwidth">
+                        <span class="icon">
+                            <i class="fas fa-edit"></i>
+                        </span>
+                        <span>Edit Student</span>
+                    </a>
+                    <a class="button is-danger is-fullwidth" href="/admin/app/student/{{student.id}}/delete/" id="delete-btn">
+                        <span class="icon">
+                            <i class="fas fa-trash"></i>
+                        </span>
+                        <span>Delete Student</span>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Parent Information -->
+    <div class="column is-8">
+        <div class="card has-shadow mb-5">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2">
+                        <i class="fas fa-users"></i>
+                    </span>
+                    Parent Information
+                </p>
+                {% if user.is_staff %}
+                <a href="#" class="card-header-icon" aria-label="add parent">
+                    <span class="icon has-text-success">
+                        <i class="fas fa-user-plus"></i>
+                    </span>
+                </a>
+                {% endif %}
+            </header>
+            <div class="card-content">
+                {% if student.parent_profiles.all %}
+                <div class="table-container">
+                    <table class="table is-fullwidth is-hoverable">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Relationship</th>
+                                <th>Phone</th>
+                                <th>Email</th>
+                                <th>Added By</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for parent_profile in student.parent_profiles.all %}
+                            <tr>
+                                <td>{{ parent_profile.user.get_full_name|default:parent_profile.user.username }}</td>
+                                <td>{{ parent_profile.get_parent_role_display }}</td>
+                                <td>{{ parent_profile.phone }}</td>
+                                <td>{{ parent_profile.user.email }}</td>
+                                <td>
+                                    {% if parent_profile.added_by %}
+                                        {{ parent_profile.added_by.get_full_name|default:parent_profile.added_by.username }}
+                                    {% else %}
+                                        <span class="has-text-grey-light">—</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="notification is-warning is-light">
+                    <p>
+                        <span class="icon"><i class="fas fa-exclamation-triangle"></i></span>
+                        No parents linked to this student.
+                        {% if user.is_staff %}
+                        <a href="#" class="has-text-weight-bold">Add a parent</a>
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Discipline Reports -->
+        <div class="card has-shadow">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2">
+                        <i class="fas fa-clipboard-list"></i>
+                    </span>
+                    Discipline Reports
+                </p>
+                {% if user.is_staff %}
+                <a href="{% url 'create_discipline_report' %}?student={{ student.id }}" class="card-header-icon" aria-label="add report">
+                    <span class="icon has-text-success">
+                        <i class="fas fa-plus"></i>
+                    </span>
+                </a>
+                {% endif %}
+            </header>
+            <div class="card-content">
+                {% if discipline_reports %}
+                <div class="table-container">
+                    <table class="table is-fullwidth is-hoverable">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Title</th>
+                                <th>Added By</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in discipline_reports %}
+                            <tr>
+                                <td>{{ report.date|date:"M d, Y" }}</td>
+                                <td>{{ report.title }}</td>
+                                <td>
+                                    {% if report.added_by %}
+                                        {{ report.added_by.get_full_name|default:report.added_by.username }}
+                                    {% else %}
+                                        <span class="has-text-grey-light">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if report.severity == 'minor' %}
+                                        <span class="tag is-warning is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-exclamation"></i></span>
+                                            Minor
+                                        </span>
+                                    {% elif report.severity == 'moderate' %}
+                                        <span class="tag is-warning">
+                                            <span class="icon is-small mr-1"><i class="fas fa-exclamation-circle"></i></span>
+                                            Moderate
+                                        </span>
+                                    {% elif report.severity == 'serious' %}
+                                        <span class="tag is-danger is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-exclamation-triangle"></i></span>
+                                            Serious
+                                        </span>
+                                    {% elif report.severity == 'critical' %}
+                                        <span class="tag is-danger">
+                                            <span class="icon is-small mr-1"><i class="fas fa-radiation"></i></span>
+                                            Critical
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if report.status == 'pending' %}
+                                        <span class="tag is-warning is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-clock"></i></span>
+                                            Pending
+                                        </span>
+                                    {% elif report.status == 'in_progress' %}
+                                        <span class="tag is-info is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-spinner"></i></span>
+                                            In Progress
+                                        </span>
+                                    {% elif report.status == 'resolved' %}
+                                        <span class="tag is-success is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-check"></i></span>
+                                            Resolved
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="buttons are-small">
+                                        <a href="{% url 'discipline_report_detail' report.id %}" class="button is-info">
+                                            <span class="icon is-small">
+                                                <i class="fas fa-eye"></i>
+                                            </span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="notification is-info is-light">
+                    <p>
+                        <span class="icon"><i class="fas fa-info-circle"></i></span>
+                        No discipline reports for this student.
+                        {% if user.is_staff %}
+                        <a href="{% url 'create_discipline_report' %}?student={{ student.id }}" class="has-text-weight-bold">Create a report</a>
+                        {% endif %}
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if user.is_staff %}
+<!-- Delete Student Modal -->
+<div class="modal" id="delete-student-modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+        <header class="modal-card-head has-background-danger-light">
+            <p class="modal-card-title">
+                <span class="icon mr-2"><i class="fas fa-exclamation-triangle"></i></span>
+                Confirm Delete Student
+            </p>
+            <button class="delete close-modal" aria-label="close"></button>
+        </header>
+        <section class="modal-card-body">
+            <p>Are you sure you want to delete <strong>{{ student.name }}</strong>?</p>
+            <div class="notification is-danger is-light mt-3">
+                <p><strong>Warning:</strong> This will also remove:</p>
+                <ul class="ml-5 mt-2">
+                    <li>All parent accounts linked to this student</li>
+                    <li>All discipline reports for this student</li>
+                    <li>Any other data associated with this student</li>
+                </ul>
+                <p class="mt-2"><strong>This action cannot be undone!</strong></p>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <form action="#" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="button is-danger">
+                    <span class="icon"><i class="fas fa-trash"></i></span>
+                    <span>Delete Student</span>
+                </button>
+                <button type="button" class="button close-modal">Cancel</button>
+            </form>
+        </footer>
+    </div>
+</div>
+
+<!-- Delete Parent Modal -->
+<div class="modal" id="delete-parent-modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+        <header class="modal-card-head has-background-danger-light">
+            <p class="modal-card-title">
+                <span class="icon mr-2"><i class="fas fa-exclamation-triangle"></i></span>
+                Confirm Delete Parent
+            </p>
+            <button class="delete close-modal" aria-label="close"></button>
+        </header>
+        <section class="modal-card-body">
+            <p>Are you sure you want to delete parent <strong id="parent-name"></strong>?</p>
+            <div class="notification is-danger is-light mt-3">
+                <p><strong>Warning:</strong> This will:</p>
+                <ul class="ml-5 mt-2">
+                    <li>Remove the parent's account from the system</li>
+                    <li>Revoke their access to view this student's information</li>
+                </ul>
+                <p class="mt-2"><strong>This action cannot be undone!</strong></p>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <form id="delete-parent-form" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="button is-danger">
+                    <span class="icon"><i class="fas fa-trash"></i></span>
+                    <span>Delete Parent</span>
+                </button>
+                <button type="button" class="button close-modal">Cancel</button>
+            </form>
+        </footer>
+    </div>
+</div>
+
+<!-- Delete Report Modal -->
+<div class="modal" id="delete-report-modal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+        <header class="modal-card-head has-background-danger-light">
+            <p class="modal-card-title">
+                <span class="icon mr-2"><i class="fas fa-exclamation-triangle"></i></span>
+                Confirm Delete Report
+            </p>
+            <button class="delete close-modal" aria-label="close"></button>
+        </header>
+        <section class="modal-card-body">
+            <p>Are you sure you want to delete the report <strong id="report-title"></strong>?</p>
+            <div class="notification is-danger is-light mt-3">
+                <p><strong>Warning:</strong> This action cannot be undone!</p>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <form id="delete-report-form" method="POST">
+                {% csrf_token %}
+                <button type="submit" class="button is-danger">
+                    <span class="icon"><i class="fas fa-trash"></i></span>
+                    <span>Delete Report</span>
+                </button>
+                <button type="button" class="button close-modal">Cancel</button>
+            </form>
+        </footer>
+    </div>
+</div>
+{% endif %}
+
+<!-- Add additional CSS for styling -->
+<style>
+    .has-shadow {
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+    
+    .has-shadow:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .table thead th {
+        color: #4a4a4a;
+        font-weight: 600;
+    }
+    
+    @media screen and (max-width: 768px) {
+        .notification, .box {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
