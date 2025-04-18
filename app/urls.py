@@ -32,9 +32,11 @@ urlpatterns = [
     # Placeholder for editing own profile - needs a view function `profile_edit_view`
     # path('profile/edit/', views.profile_edit_view, name='profile_edit'),
 
-    # --- Parent Registration URL (Example) ---
-    # Placeholder for the Admin/Staff view to register parents - needs a view function `register_parent_view`
-    # path('parents/register/', views.register_parent_view, name='register_parent'),
+    # --- Parent Registration URL  ---
+  
+    path('parents/create/', views.create_parent_profile, name='create_parent_profile'),
+    path('parents/credentials/', views.display_parent_credentials, name='display_parent_credentials'),
+    path('parents/', views.list_parents, name='list_parents'),
 
     # Note: Login, Logout, Password Change/Reset are typically handled at the project level
     # using django.contrib.auth.urls

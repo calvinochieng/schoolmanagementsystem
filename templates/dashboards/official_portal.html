@@ -77,7 +77,7 @@
                             </div>
                         </div>
                     </div>
-                    <a href="#" class="is-size-7 has-text-info has-text-weight-bold">
+                    <a href="{% url "list_parents" %}" class="is-size-7 has-text-info has-text-weight-bold">
                         <span class="icon is-small"><i class="fas fa-arrow-right"></i></span>
                         <span>View All Parents</span>
                     </a>
@@ -87,7 +87,7 @@
     </div>
     
     <!-- Recent Discipline Reports -->
-    <div class="column is-12  mt-5 is-7-widescreen">
+    <div class="column is-12  mt-5">
         <div class="card">
             <header class="card-header">
                 <p class="card-header-title">
@@ -210,30 +210,6 @@
             </footer>
         </div>
     </div>
-    
-    {% if user.is_superuser %}
-    <!-- Admin Stats (Only visible to superusers) -->
-    <div class="column is-12 mt-5 is-5-widescreen">
-        <div class="columns is-multiline is-mobile card">
-            <h4 class="title is-5 column is-12">
-                <span class="icon is-small mr-2"><i class="fas fa-shield-alt"></i></span>
-                <span>Administrative Overview</span>
-            </h4>
-            <div class="column is-6-mobile">
-                <div class="box " style="box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.01);">
-                    <p class="heading has-text-grey-dark has-text-weight-bold">Admin Users</p>
-                    <p class="title is-4 has-text-grey-dark">{{ admin_count }}</p>
-                </div>
-            </div>
-            <div class="column is-6-mobile">
-                <div class="box" style="box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.01);">
-                    <p class="heading has-text-grey-dark has-text-weight-bold">Staff Users</p>
-                    <p class="title is-4 has-text-grey-dark">{{ staff_count }}</p>
-                </div>
-            </div>
-        </div>
-    </div>
-    {% endif %}
 </div>
 
 {% if user.is_superuser %}
@@ -257,7 +233,7 @@
                         <span class="icon"><i class="fas fa-user-graduate"></i></span>
                         <span>Manage Students</span>
                     </a>
-                    <a href="/admin/app/parentprofile/add/" class="button is-success">
+                    <a href="{% url "create_parent_profile" %}" class="button is-success">
                         <span class="icon"><i class="fas fa-user-plus"></i></span>
                         <span>Add Parent Account</span>
                     </a>

@@ -1,0 +1,148 @@
+{% extends 'base.html' %}
+
+{% block title %}Create Parent Profile - School Management Portal{% endblock %}
+
+{% block breadcrumb_items %}
+    <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+    <li class="is-active"><a href="{% url 'create_parent_profile' %}" aria-current="page">Create Parent Profile</a></li>
+{% endblock %}
+
+{% block page_icon %}<span class="icon is-medium mr-2"><i class="fas fa-user-plus"></i></span>{% endblock %}
+{% block page_title %}Create Parent Profile{% endblock %}
+{% block page_subtitle %}Add a new parent account to the school management system{% endblock %}
+
+{% block content %}
+<div class="columns">
+    <div class="column is-8 is-offset-2">
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-user-plus"></i></span>
+                    Parent Information
+                </p>
+            </header>
+            <div class="card-content">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    {% if form.non_field_errors %}
+                    <div class="notification is-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="field">
+                        <label for="{{ form.student.id_for_label }}" class="label">{{ form.student.label }}</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                {{ form.student }}
+                            </div>
+                        </div>
+                        {% if form.student.errors %}
+                        <p class="help is-danger">{{ form.student.errors }}</p>
+                        {% endif %}
+                    </div>                    
+                    
+                    <div class="field">
+                        <label for="{{ form.full_name.id_for_label }}" class="label">{{ form.full_name.label }}</label>
+                        <div class="control has-icons-left">
+                            {{ form.full_name }}
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-full_name"></i>
+                            </span>
+                        </div>
+                        {% if form.full_name.errors %}
+                        <p class="help is-danger">{{ form.full_name.errors }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="field">
+                        <label for="{{ form.parent_role.id_for_label }}" class="label">{{ form.parent_role.label }}</label>
+                        <div class="control">
+                            <div class="select is-fullwidth">
+                                {{ form.parent_role }}
+                            </div>
+                        </div>
+                        {% if form.parent_role.errors %}
+                        <p class="help is-danger">{{ form.parent_role.errors }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="field">
+                        <label for="{{ form.phone.id_for_label }}" class="label">{{ form.phone.label }}</label>
+                        <div class="control has-icons-left">
+                            {{ form.phone }}
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-phone"></i>
+                            </span>
+                        </div>
+                        {% if form.phone.errors %}
+                        <p class="help is-danger">{{ form.phone.errors }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="field">
+                        <label for="{{ form.email.id_for_label }}" class="label">{{ form.email.label }}</label>
+                        <div class="control has-icons-left">
+                            {{ form.email }}
+                            <span class="icon is-small is-left">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                        </div>
+                        {% if form.email.errors %}
+                        <p class="help is-danger">{{ form.email.errors }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="field mt-5">
+                        <div class="control">
+                            <button type="submit" class="button is-primary is-fullwidth">
+                                <span class="icon"><i class="fas fa-save"></i></span>
+                                <span>Create Parent Profile</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <footer class="card-footer">
+                <a href="{% url 'list_parents' %}" class="card-footer-item has-text-info">
+                    <span class="icon"><i class="fas fa-arrow-left"></i></span>
+                    <span>Back to Parents List</span>
+                </a>
+                <a href="{% url 'dashboard' %}" class="card-footer-item has-text-grey">
+                    <span class="icon"><i class="fas fa-tachometer-alt"></i></span>
+                    <span>Dashboard</span>
+                </a>
+            </footer>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
+        border-radius: 6px;
+        overflow: hidden;
+        transition: all 0.3s;
+    }
+    
+    .card:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    
+    .input, .select, .select select {
+        border-radius: 4px;
+    }
+    
+    .button {
+        border-radius: 4px;
+        transition: all 0.3s;
+    }
+    
+    @media screen and (max-width: 768px) {
+        .card-content {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}

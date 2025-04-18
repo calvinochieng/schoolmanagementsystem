@@ -3,7 +3,7 @@
 from django import forms
 from django.utils import timezone
 # Import your models (adjust path if needed)
-from .models import DisciplineReport, Student, ParentProfile, User # Import native User
+from .models import DisciplineReport, Student, ParentProfile
 
 class StatusUpdateForm(forms.ModelForm):
     """Form for updating the status of a discipline report."""
@@ -76,74 +76,43 @@ class DisciplineReportForm(forms.ModelForm):
 # NOTE: This is a standard forms.Form because it doesn't map directly to one model.
 # The logic to create User and ParentProfile objects, generate passwords, etc.,
 # will reside primarily in the VIEW function that processes this form.
-class ParentRegistrationForm(forms.Form):
-    """
-    Form for Admin/Staff to input data for creating a new Parent User
-    and their associated ParentProfile.
-    """
+
+class ParentProfileForm(forms.Form):
+    student = forms.ModelChoiceField(
+        queryset=Student.objects.all(),
+        label="Select Student",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
     full_name = forms.CharField(
-        max_length=150, # Match User model's first/last name constraints roughly
-        required=True,
-        widget=forms.TextInput(attrs={'placeholder': 'Parent\'s Full Name'})
-        )
-    email = forms.EmailField(
-        required=True,
-        widget=forms.EmailInput(attrs={'placeholder': 'parent@example.com'})
-        )
-    # Optional: Allow specifying a username, otherwise view can default to email
-    # username = forms.CharField(max_length=150, required=False)
-    phone = forms.CharField(
-        max_length=15,
-        required=True,
-        widget=forms.TextInput(attrs={'placeholder': '+2547XXXXXXXX'})
-        )
+        max_length=255,
+        label="Full Name",
+        widget=forms.TextInput(attrs={'class': 'form-control input'})
+    )
+    
     parent_role = forms.ChoiceField(
         choices=ParentProfile.PARENT_ROLE_CHOICES,
-        required=True,
-        widget=forms.Select(attrs={'class': 'select'}) # Add Bulma class
-        )
-    # Gender field if needed (assuming it's on ParentProfile, as native User doesn't have it)
-    # gender = forms.ChoiceField(choices=[('male', 'Male'), ('female', 'Female'), ('other', 'Other')], required=False) # Example choices
-    student = forms.ModelChoiceField(
-        queryset=Student.objects.all().order_by('name'),
-        required=True,
-        widget=forms.Select(attrs={'class': 'select is-fullwidth'}), # Add Bulma class
-        label="Link to Student"
-        )
-
-    # Custom validation methods
-    def clean_email(self):
-        email = self.cleaned_data.get('email')
-        if User.objects.filter(email__iexact=email).exists():
-            raise forms.ValidationError("An account with this email address already exists.")
-        return email
-
-    # Optional: Add username validation if you include that field
-    # def clean_username(self):
-    #     username = self.cleaned_data.get('username')
-    #     if username and User.objects.filter(username__iexact=username).exists():
-    #         raise forms.ValidationError("This username is already taken.")
-    #     return username
-
+        label="Parent Role",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    
+    phone = forms.CharField(
+        max_length=15,
+        label="Phone Number",
+        widget=forms.TextInput(attrs={'class': 'form-control input'})
+    )
+    
+    email = forms.EmailField(
+        required=False,
+        label="Email Address (Optional)",
+        widget=forms.EmailInput(attrs={'class': 'form-control input'})
+    )
+    
     def clean_phone(self):
-        phone = self.cleaned_data.get('phone')
-        # Add specific phone validation if needed (e.g., format)
+        phone = self.cleaned_data['phone']
+        # Check if phone number already exists
         if ParentProfile.objects.filter(phone=phone).exists():
-            raise forms.ValidationError("This phone number is already associated with another parent profile.")
+            raise forms.ValidationError("This phone number is already registered with another parent.")
         return phone
-
-    def clean_full_name(self):
-        full_name = self.cleaned_data.get('full_name')
-        if ' ' not in full_name.strip(): # Basic check for at least two names
-             raise forms.ValidationError("Please enter both first and last names.")
-        return full_name
-
-    # NOTE: No save() method here. The view will handle:
-    # 1. Validating this form.
-    # 2. Generating a temporary password.
-    # 3. Creating the User instance (is_staff=False, is_superuser=False).
-    # 4. Creating the ParentProfile instance.
-    # 5. Returning the generated password to the Admin/Staff.
 
 # --- Other Potential Forms (To be created later) ---
 # class StudentForm(forms.ModelForm): ...

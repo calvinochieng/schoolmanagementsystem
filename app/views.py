@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import login_required, user_passes_test
 from django.db.models import Count, Q
 
 from django.contrib.auth.models import User
@@ -8,12 +8,13 @@ from django.contrib import messages
 from django.urls import reverse_lazy, reverse
 from django.http import HttpResponseForbidden, HttpResponse
 
+from django.utils.crypto import get_random_string
 
 from .models import *
+from .forms import *
 
-from .forms import DisciplineReportForm, StatusUpdateForm
-
-
+def is_staff(user):
+    return user.is_staff
 # --- Index View ---
 def index(request):
     """
@@ -86,6 +87,90 @@ def dashboard(request):
     # Render the official dashboard template
     return render(request, 'dashboards/official_portal.html', context)
 
+
+
+# --- Parent Creation, And Profile ---
+
+@login_required
+@user_passes_test(is_staff)
+def create_parent_profile(request):
+    """View for creating parent profile with Django user account."""
+    
+    if request.method == 'POST':
+        form = ParentProfileForm(request.POST)
+        
+        if form.is_valid():
+            # Get the student from the form
+            student = form.cleaned_data['student']
+            parent_role = form.cleaned_data['parent_role']
+            phone = form.cleaned_data['phone']
+            
+            # Create username in the format P-{enrollment_number}
+            username = f"P-{student.enrollment_number}"
+            
+            # Check if username exists and append random characters if needed
+            base_username = username
+            # If user exists then redirect them to the larent page
+            if User.objects.filter(username=username).exists():
+                messages.warning = f"Parent of the student {student.name} already exists. Please choose a different student."
+                redirect_url = reverse('parent_detail', args=[username])
+            
+            # Generate a random password
+            password = get_random_string(length=8, allowed_chars='abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789') 
+            
+            # Create the Django user
+            user = User.objects.create_user(
+                username=username,
+                email=form.cleaned_data.get('email', ''),  # Email optional
+                password=password
+            )
+            
+            # Create parent profile linked to the user
+            parent_profile = ParentProfile(
+                user=user,
+                parent_role=parent_role,
+                phone=phone,
+                student=student,
+                added_by=request.user
+            )
+            parent_profile.save()
+            
+            # Store credentials in session to display once
+            request.session['new_parent_credentials'] = {
+                'username': username,
+                'password': password,
+                'parent_name': user.get_full_name() or username,
+                'student_name': student.name
+            }
+            
+            messages.success(request, "Parent profile created successfully.")
+            return redirect('display_parent_credentials')
+    else:
+        form = ParentProfileForm()
+    
+    return render(request, 'parent/create_parent_profile.html', {'form': form})
+
+@login_required
+@user_passes_test(is_staff)
+def display_parent_credentials(request):
+    """View to display the newly created parent credentials once."""
+    
+    credentials = request.session.get('new_parent_credentials', None)
+    
+    if credentials:
+        # Remove from session after retrieving
+        del request.session['new_parent_credentials']
+        return render(request, 'parent/parent_credentials.html', {'credentials': credentials})
+    else:
+        messages.warning(request, "No new parent credentials to display.")
+        return redirect('list_parents')  # Redirect to a suitable page
+
+@login_required
+@user_passes_test(is_staff)
+def list_parents(request):
+    """View to display all parent profiles."""
+    parents = ParentProfile.objects.all().select_related('user', 'student')
+    return render(request, 'parent/list_parents.html', {'parents': parents})
 
 # --- Parent Dashboard View ---
 @login_required

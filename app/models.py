@@ -73,6 +73,7 @@ class ParentProfile(models.Model):
         related_name='parent_profile',
         primary_key=True, # Often good practice for profile models
     )
+    full_name = models.CharField(max_length=255)
     PARENT_ROLE_CHOICES = [
         ('father', 'Father'),
         ('mother', 'Mother'),
@@ -80,6 +81,7 @@ class ParentProfile(models.Model):
     ]
     parent_role = models.CharField(max_length=10, choices=PARENT_ROLE_CHOICES)
     phone = models.CharField(max_length=15, unique=True)
+    email = models.EmailField(unique=True, null=True, blank=True)
     student = models.ForeignKey(
         Student,
         on_delete=models.CASCADE,
