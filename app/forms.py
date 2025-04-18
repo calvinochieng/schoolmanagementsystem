@@ -82,8 +82,8 @@ class ParentProfileForm(forms.ModelForm):
         model = ParentProfile  # Specify the model the form is based on
         # List the fields from the model to include in the form
         fields = ['student', 'full_name', 'parent_role', 'phone', 'email']
-    student = forms.ModelChoiceField(        
-        queryset=Student.objects.filter(parent_profiles__isnull=True),
+    student = forms.ModelChoiceField(
+        queryset=Student.objects.none(),   # we’ll override this in __init__
         label="Select Student",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
@@ -110,6 +110,17 @@ class ParentProfileForm(forms.ModelForm):
         label="Email Address (Optional)",
         widget=forms.EmailInput(attrs={'class': 'form-control input'})
     )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # base queryset: only students with no parent profiles
+        qs = Student.objects.filter(parent_profiles__isnull=True)
+
+        # if we’re editing, include that student even though they have a profile
+        if self.instance and self.instance.pk:
+            qs = qs | Student.objects.filter(pk=self.instance.student_id)
+
+        self.fields['student'].queryset = qs.distinct()
     
     
 # class ParentProfileForm(forms.ModelForm):

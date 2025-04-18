@@ -8,7 +8,6 @@ urlpatterns = [
     # --- Main/Dashboard URLs ---
     path('', views.index, name='index'), # Root URL of the app
     path('dashboard/', views.dashboard, name='dashboard'), # Official (Admin/Staff) dashboard
-    path('portal/', views.parent_dashboard, name='parent_dashboard'), # Parent portal/dashboard
 
     # --- Student URLs ---
     path('students/', views.student_list, name='student_list'),
@@ -37,6 +36,7 @@ urlpatterns = [
     path('parents/create/', views.create_parent_profile, name='create_parent_profile'),
     path('parents/credentials/', views.display_parent_credentials, name='display_parent_credentials'),
     path('parents/', views.parents_list, name='parents_list'),
+    path('parent-portal/', views.parent_portal_detail, name='parent_portal_detail'),    
     # parent_detail view is a placeholder for the parent detail view
     path('parents/<str:username>/', views.parent_detail_view, name='parent_detail'),
     # Placeholder for editing a parent profile - needs a view function `edit_parent_profile`

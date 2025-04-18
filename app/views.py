@@ -15,6 +15,31 @@ from .forms import *
 
 def is_staff(user):
     return user.is_staff
+
+# Django in built user login
+from django.contrib.auth import login, authenticate
+from django.contrib.auth import logout
+from django.contrib.auth.forms import AuthenticationForm
+
+def login(request):
+    """View for user login."""
+    if request.user.is_authenticated:
+        return redirect('index')  # Redirect authenticated users to index or dashboard
+    if request.method == 'POST':
+        form = AuthenticationForm(request, data=request.POST)
+        if form.is_valid():
+            username = form.cleaned_data.get('username')
+            password = form.cleaned_data.get('password')
+            user = authenticate(request, username=username, password=password)
+            if user is not None:
+                login(request, user)
+                return redirect('index')  # Redirect to index or dashboard
+        else:
+            messages.error(request, "Invalid username or password.")
+    else:
+        form = AuthenticationForm()
+    return render(request, 'registration/login.html', {'form': form})
+
 # --- Index View ---
 def index(request):
     """
@@ -27,7 +52,7 @@ def index(request):
          else:
              # Assume non-staff users might be parents
              # Add check for parent profile existence for robustness?
-             return redirect('parent_dashboard')
+             return redirect('parent_portal_detail')
     # If not authenticated, show index page
     return render(request, 'index.html', {})
 
@@ -43,7 +68,7 @@ def dashboard(request):
     # Ensure only staff/admin can access this view
     if not user.is_staff:
         # Redirect non-staff users (likely parents) away
-        # Could redirect to parent_dashboard or login
+        # Could redirect to parent_portal_detail or login
         if not user.is_authenticated:
              return redirect(reverse_lazy('login'))
         # If authenticated but not staff, maybe parent dashboard?
@@ -52,7 +77,7 @@ def dashboard(request):
         try:
             # Check if they look like a parent
             if hasattr(user, 'parent_profile'):
-                 return redirect('parent_dashboard')
+                 return redirect('parent_portal_detail')
             else: # Authenticated, not staff, no parent profile? Deny.
                  return HttpResponseForbidden("Access Denied.")
         except ParentProfile.DoesNotExist: # Should not happen with OneToOneField check above
@@ -203,59 +228,65 @@ def parent_detail_view(request, username):
     # Get the parent profile or return 404
     parent_profile = get_object_or_404(ParentProfile.objects.select_related('user', 'student'), user__username=username)
     
-    # Get the linked student(s) for this parent
-    students = parent_profile.student.all()
-    
-    # Get discipline reports for each student, newest first
-    discipline_reports = DisciplineReport.objects.filter(
-        student__in=students, is_deleted=False
-    ).select_related('added_by').order_by('-created_at')
-    
-    context = {
-        'parent_profile': parent_profile,
-        'students': students,
-        'discipline_reports': discipline_reports,
-        'page_title': f"{parent_profile.user.get_full_name() or username} - Parent Profile",
-    }
-    
-    return render(request, 'parent/parent_detail.html', context)
+    portal_url = (
+        reverse('parent_portal_detail')
+        + f'?parent_id={parent_profile.user_id}'
+    )
+    return redirect(portal_url)
+
 
 
 # --- Parent Dashboard View ---
 @login_required
-def parent_dashboard(request):
+def parent_portal_detail(request):
     """
-    Displays the dashboard specifically for logged-in Parent users.
+    View for parent portal showing student details and discipline reports.
+    Accessible by users with a parent profile and superusers who can filter between parents.
     """
-    user = request.user
-
-    # Ensure user is NOT staff/admin
-    if user.is_staff:
-        # Redirect staff/admins to their dashboard
-        return redirect('dashboard')
-
-    try:
-        # Get the profile linked to this parent user via OneToOneField
-        # related_name is 'parent_profile'
-        parent_profile = get_object_or_404(ParentProfile, user=user)
+    # For superusers: allow filtering by parent_id if provided
+    if request.user.is_superuser:
+        parent_id = request.GET.get('parent_id')
+        
+        # Get all parent profiles for dropdown filter
+        all_parents = ParentProfile.objects.all().order_by('student__name')
+        
+        if parent_id:
+            # If specific parent requested, get that parent's profile
+            parent_profile = get_object_or_404(ParentProfile, user_id=parent_id)
+        elif all_parents.exists():
+            # Default to first parent if none specified
+            parent_profile = all_parents.first()
+        else:
+            messages.warning(request, "No parent profiles exist in the system.")
+            return redirect('dashboard')
+            
         student = parent_profile.student
-    except ParentProfile.DoesNotExist:
-         messages.error(request, "Your parent profile could not be found. Please contact administration.")
-         # Log this critical error server-side
-         return redirect(reverse_lazy('login'))
-
-    # Fetch data specific to this parent's student
-    student_reports = DisciplineReport.objects.filter(
-        student=student, is_deleted=False
-    ).order_by('-date', '-created_at')
-
+        
+    else:
+        # Regular parent user - check if they have a parent profile
+        try:
+            parent_profile = request.user.parent_profile
+            student = parent_profile.student
+            all_parents = None  # Regular parents don't need the list of all parents
+        except ParentProfile.DoesNotExist:
+            messages.error(request, "You don't have access to the parent portal.")
+            return redirect('dashboard')
+    
+    # Get all discipline reports for this student, ordered by date (newest first)
+    discipline_reports = DisciplineReport.objects.filter(
+        student=student,
+        is_deleted=False
+    ).order_by('-date')
+    
     context = {
+        'parent_profile': parent_profile,
         'student': student,
-        'profile': parent_profile,
-        'reports': student_reports,
+        'discipline_reports': discipline_reports,
+        'all_parents': all_parents,  # Will be None for regular parent users
+        'is_superuser': request.user.is_superuser
     }
-    # Render the parent-specific portal template
-    return render(request, 'dashboards/parent_portal.html', context)
+    
+    return render(request, 'parent/parent_portal.html', context)
 
 
 # --- Discipline Report List View (for Admin/Staff) ---

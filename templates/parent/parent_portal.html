@@ -1,2 +1,439 @@
-Parent portal
-///////
+{% extends 'base.html' %}
+
+{% block title %}Parent Portal - School Management System{% endblock %}
+
+{% block breadcrumb_items %}
+    <li class="is-active"><a href="{% url 'parent_portal_detail' %}" aria-current="page">Parent Portal</a></li>
+{% endblock %}
+
+{% block page_icon %}<span class="icon is-medium mr-2"><i class="fas fa-user-circle"></i></span>{% endblock %}
+{% block page_title %}Parent Portal{% endblock %}
+{% block page_subtitle %}
+    {% if is_superuser %}
+        Admin View - Student information and discipline reports
+    {% else %}
+        Student information and discipline reports for {{ parent_profile.get_full_name }}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+{% if is_superuser %}
+<!-- Parent Selection Filter for Admins -->
+<div class="column is-12 mb-4">
+    <div class="card">
+        <header class="card-header">
+            <p class="card-header-title">
+                <span class="icon mr-2"><i class="fas fa-filter"></i></span>
+                Select Parent
+            </p>
+        </header>
+        <div class="card-content">
+            <div class="field has-addons">
+                <div class="control is-expanded">
+                    <div class="select is-fullwidth">
+                        <select id="parentSelector">
+                            {% for parent in all_parents %}
+                                <option value="{{ parent.user_id }}" {% if parent.user_id == parent_profile.user_id %}selected{% endif %}>
+                                    {{ parent.get_full_name }} ({{ parent.get_parent_role_display }} of {{ parent.student.name }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="control">
+                    <button class="button is-primary" id="viewParentBtn">
+                        <span class="icon"><i class="fas fa-search"></i></span>
+                        <span>View</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="columns is-multiline">
+    <!-- Student Overview Card - Prominent display at the top -->
+    <div class="column is-12">
+        <div class="card has-background-light">
+            <div class="card-content">
+                <div class="columns is-vcentered">
+                    <div class="column is-2">
+                        <div class="is-flex is-justify-content-center">
+                            <span class="icon is-large has-text-primary">
+                                <i class="fas fa-user-graduate fa-4x"></i>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="column">
+                        <h1 class="title is-3 mb-2">{{ student.name }}</h1>
+                        <div class="is-flex is-flex-wrap-wrap">
+                            <div class="mr-4 mb-2">
+                                <span class="icon-text">
+                                    <span class="icon has-text-info"><i class="fas fa-graduation-cap"></i></span>
+                                    <span><strong>Grade:</strong> {{ student.get_grade_display }}</span>
+                                </span>
+                            </div>
+                            <div class="mr-4 mb-2">
+                                <span class="icon-text">
+                                    <span class="icon has-text-success"><i class="fas fa-id-card"></i></span>
+                                    <span><strong>ID:</strong> {{ student.enrollment_number }}</span>
+                                </span>
+                            </div>
+                            <div class="mr-4 mb-2">
+                                <span class="icon-text">
+                                    <span class="icon has-text-grey"><i class="fas fa-calendar-alt"></i></span>
+                                    <span><strong>Enrolled:</strong> {{ student.enrollment_date|date:"F d, Y" }}</span>
+                                </span>
+                            </div>
+                            <div class="mb-2">
+                                <span class="icon-text">
+                                    <span class="icon has-text-grey"><i class="fas fa-venus-mars"></i></span>
+                                    <span><strong>Gender:</strong> {{ student.get_gender_display }}</span>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Discipline Reports -->
+    <div class="column is-12 mt-4">
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-clipboard-list"></i></span>
+                    Discipline Reports
+                </p>
+                {% if is_superuser %}
+                <a href="/admin/app/disciplinereport/add/" class="card-header-icon" aria-label="add new">
+                    <span class="icon has-text-success">
+                        <i class="fas fa-plus-circle"></i>
+                    </span>
+                </a>
+                {% endif %}
+            </header>
+            <div class="card-content">
+                <div class="table-container">
+                    <table class="table is-fullwidth is-hoverable is-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Title</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for report in discipline_reports %}
+                            <tr>
+                                <td>{{ report.date|date:"M d, Y" }}</td>
+                                <td>{{ report.title }}</td>
+                                <td>
+                                    {% if report.severity == 'minor' %}
+                                        <span class="tag is-warning is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-exclamation"></i></span>
+                                            Minor
+                                        </span>
+                                    {% elif report.severity == 'moderate' %}
+                                        <span class="tag is-warning">
+                                            <span class="icon is-small mr-1"><i class="fas fa-exclamation-circle"></i></span>
+                                            Moderate
+                                        </span>
+                                    {% elif report.severity == 'serious' %}
+                                        <span class="tag is-danger is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-exclamation-triangle"></i></span>
+                                            Serious
+                                        </span>
+                                    {% elif report.severity == 'critical' %}
+                                        <span class="tag is-danger">
+                                            <span class="icon is-small mr-1"><i class="fas fa-radiation"></i></span>
+                                            Critical
+                                        </span>
+                                    {% else %}
+                                        <span class="tag is-severity-{{ report.severity|lower }}">
+                                            {{ report.get_severity_display }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if report.status == 'pending' %}
+                                        <span class="tag is-warning is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-clock"></i></span>
+                                            Pending
+                                        </span>
+                                    {% elif report.status == 'in_progress' %}
+                                        <span class="tag is-info is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-spinner"></i></span>
+                                            In Progress
+                                        </span>
+                                    {% elif report.status == 'resolved' %}
+                                        <span class="tag is-success is-light">
+                                            <span class="icon is-small mr-1"><i class="fas fa-check"></i></span>
+                                            Resolved
+                                        </span>
+                                    {% else %}
+                                        <span class="tag is-status-{{ report.status|lower }}">
+                                            {{ report.get_status_display }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="has-text-right">
+                                    <a href="#" class="button is-small is-outlined is-primary" 
+                                       onclick="showDisciplineDetails('{{ report.id }}', '{{ report.title|escapejs }}', '{{ report.date|date:"M d, Y" }}', '{{ report.description|escapejs }}', '{{ report.severity }}', '{{ report.status }}', '{{ report.comment|escapejs }}')">
+                                        <span class="icon is-small">
+                                            <i class="fas fa-eye"></i>
+                                        </span>
+                                        <span>View Details</span>
+                                    </a>
+                                    {% if is_superuser %}
+                                    <a href="{% url 'discipline_report_detail' report.id %}" class="button is-small is-outlined is-info">
+                                        <span class="icon is-small">
+                                            <i class="fas fa-edit"></i>
+                                        </span>
+                                        <span>Edit</span>
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="5" class="has-text-centered py-5">
+                                    <p class="has-text-grey mb-4">No discipline reports found for this student.</p>
+                                    {% if is_superuser %}
+                                    <a href="/admin/app/disciplinereport/add/" class="button is-small is-primary">
+                                        <span class="icon is-small">
+                                            <i class="fas fa-plus"></i>
+                                        </span>
+                                        <span>Create New Report</span>
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    
+    <!-- Parent Information -->
+    <div class="column is-12 mt-4">
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-users"></i></span>
+                    Parent Information
+                </p>
+                {% if is_superuser %}
+                <a href="{% url 'create_parent_profile' %}" class="card-header-icon">
+                    <span class="icon has-text-info">
+                        <i class="fas fa-edit"></i>
+                    </span>
+                </a>
+                {% endif %}
+            </header>
+            <div class="card-content">
+                <div class="content">
+                    <table class="table is-fullwidth">
+                        <tbody>
+                            <tr>
+                                <th width="200">Parent/Guardian Name</th>
+                                <td>{{ parent_profile.get_full_name }}</td>
+                            </tr>
+                            <tr>
+                                <th>Relationship</th>
+                                <td>{{ parent_profile.get_parent_role_display }}</td>
+                            </tr>
+                            <tr>
+                                <th>Contact Phone</th>
+                                <td>{{ parent_profile.phone }}</td>
+                            </tr>
+                            {% if parent_profile.email %}
+                            <tr>
+                                <th>Email</th>
+                                <td>{{ parent_profile.email }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <th>Account Created</th>
+                                <td>{{ parent_profile.created_at|date:"F d, Y" }}</td>
+                            </tr>
+                            {% if is_superuser %}
+                            <tr>
+                                <th>Added By</th>
+                                <td>{{ parent_profile.added_by.get_full_name|default:parent_profile.added_by.username }}</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Viewing Discipline Report Details -->
+<div class="modal" id="disciplineModal">
+    <div class="modal-background"></div>
+    <div class="modal-card">
+        <header class="modal-card-head">
+            <p class="modal-card-title" id="modal-title">Discipline Report</p>
+            <button class="delete" aria-label="close" onclick="closeModal()"></button>
+        </header>
+        <section class="modal-card-body">
+            <div class="content">
+                <div class="field">
+                    <label class="label">Date</label>
+                    <p id="modal-date"></p>
+                </div>
+                <div class="field">
+                    <label class="label">Severity</label>
+                    <p id="modal-severity"></p>
+                </div>
+                <div class="field">
+                    <label class="label">Status</label>
+                    <p id="modal-status"></p>
+                </div>
+                <div class="field">
+                    <label class="label">Description</label>
+                    <div class="box" id="modal-description"></div>
+                </div>
+                <div class="field" id="comment-section">
+                    <label class="label">Comments</label>
+                    <div class="box" id="modal-comment"></div>
+                </div>
+            </div>
+        </section>
+        <footer class="modal-card-foot">
+            <button class="button" onclick="closeModal()">Close</button>
+        </footer>
+    </div>
+</div>
+
+<!-- Add additional CSS for better styling -->
+<style>
+    .has-shadow {
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        transition: all 0.3s;
+    }
+    
+    .has-shadow:hover {
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        transform: translateY(-2px);
+    }
+    
+    .card {
+        box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    
+    .table thead th {
+        color: #4a4a4a;
+        font-weight: 600;
+    }
+    
+    @media screen and (max-width: 768px) {
+        .notification, .box {
+            padding: 1rem;
+        }
+        
+        .card-content {
+            padding: 1rem;
+        }
+        
+        .column {
+            padding: 0.5rem;
+        }
+    }
+</style>
+
+<!-- JavaScript for Modal Management and Parent filtering -->
+<script>
+    // For Admin Parent Filtering
+    document.addEventListener('DOMContentLoaded', function() {
+        const parentSelector = document.getElementById('parentSelector');
+        const viewParentBtn = document.getElementById('viewParentBtn');
+        
+        if (viewParentBtn) {
+            viewParentBtn.addEventListener('click', function() {
+                if (parentSelector) {
+                    const selectedParentId = parentSelector.value;
+                    window.location.href = "{% url 'parent_portal_detail' %}?parent_id=" + selectedParentId;
+                }
+            });
+        }
+    });
+
+    function showDisciplineDetails(id, title, date, description, severity, status, comment) {
+        // Set modal content
+        document.getElementById('modal-title').textContent = title;
+        document.getElementById('modal-date').textContent = date;
+        document.getElementById('modal-description').textContent = description;
+        
+        // Handle comment (might be empty)
+        const commentSection = document.getElementById('comment-section');
+        const commentContent = document.getElementById('modal-comment');
+        
+        if (comment && comment.trim() !== '') {
+            commentContent.textContent = comment;
+            commentSection.style.display = 'block';
+        } else {
+            commentSection.style.display = 'none';
+        }
+        
+        // Set severity with appropriate formatting
+        let severityHtml = '';
+        if (severity === 'minor') {
+            severityHtml = '<span class="tag is-warning is-light"><span class="icon is-small mr-1"><i class="fas fa-exclamation"></i></span>Minor</span>';
+        } else if (severity === 'moderate') {
+            severityHtml = '<span class="tag is-warning"><span class="icon is-small mr-1"><i class="fas fa-exclamation-circle"></i></span>Moderate</span>';
+        } else if (severity === 'serious') {
+            severityHtml = '<span class="tag is-danger is-light"><span class="icon is-small mr-1"><i class="fas fa-exclamation-triangle"></i></span>Serious</span>';
+        } else if (severity === 'critical') {
+            severityHtml = '<span class="tag is-danger"><span class="icon is-small mr-1"><i class="fas fa-radiation"></i></span>Critical</span>';
+        }
+        document.getElementById('modal-severity').innerHTML = severityHtml;
+        
+        // Set status with appropriate formatting
+        let statusHtml = '';
+        if (status === 'pending') {
+            statusHtml = '<span class="tag is-warning is-light"><span class="icon is-small mr-1"><i class="fas fa-clock"></i></span>Pending</span>';
+        } else if (status === 'in_progress') {
+            statusHtml = '<span class="tag is-info is-light"><span class="icon is-small mr-1"><i class="fas fa-spinner"></i></span>In Progress</span>';
+        } else if (status === 'resolved') {
+            statusHtml = '<span class="tag is-success is-light"><span class="icon is-small mr-1"><i class="fas fa-check"></i></span>Resolved</span>';
+        }
+        document.getElementById('modal-status').innerHTML = statusHtml;
+        
+        // Show the modal
+        document.getElementById('disciplineModal').classList.add('is-active');
+    }
+    
+    function closeModal() {
+        document.getElementById('disciplineModal').classList.remove('is-active');
+    }
+    
+    // Close modal when clicking outside
+    document.addEventListener('click', function(event) {
+        const modal = document.getElementById('disciplineModal');
+        if (event.target.classList.contains('modal-background')) {
+            modal.classList.remove('is-active');
+        }
+    });
+    
+    // Close modal with escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            document.getElementById('disciplineModal').classList.remove('is-active');
+        }
+    });
+</script>
+{% endblock %}

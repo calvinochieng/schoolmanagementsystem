@@ -35,7 +35,8 @@
                         <label for="{{ form.student.id_for_label }}" class="label">{{ form.student.label }}</label>
                         <div class="control">
                             <div class="select is-fullwidth">
-                                {% if action %} {{parent_profile.student.name}} {% else %}{{ form.student }}{% endif %}
+                                {% if action %} {{ form.student }}
+                                {% else %}{{ form.student }}{% endif %}
                             </div>
                         </div>
                         {% if form.student.errors %}

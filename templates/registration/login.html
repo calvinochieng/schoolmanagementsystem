@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - School Management System{% endblock %}
+
+
+            <!-- Add breadcrumbs -->
+            {% block breadcrumb %}
+            {% endblock %}
+            {% block page_icon %}{% endblock %}
+            {% block page_title %}{% endblock %}
+
+{% block content %}
+<section class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-6-tablet is-5-desktop is-4-widescreen">
+                <div class="box has-shadow">
+                    <!-- School Logo -->
+                    <div class="has-text-centered mb-5">
+                        <span class="icon is-large has-text-primary">
+                            <i class="fas fa-school fa-3x"></i>
+                        </span>
+                        <h1 class="title is-4 mt-3">School Management System</h1>
+                        <p class="subtitle is-6 has-text-grey">Sign in to your account</p>
+                    </div>
+                    
+                    <!-- Error Messages -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="notification is-danger is-light">
+                                <button class="delete"></button>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    {% if form.errors %}
+                        <div class="notification is-danger is-light">
+                            <button class="delete"></button>
+                            Your username and password didn't match. Please try again.
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Login Form -->
+                    <form method="post" action="{% url 'login' %}">
+                        {% csrf_token %}
+                        
+                        <div class="field">
+                            <label for="id_username" class="label">Username</label>
+                            <div class="control has-icons-left">
+                                <input type="text" name="username" autofocus autocapitalize="none" autocomplete="username" maxlength="150" required id="id_username" class="input">
+                                <span class="icon is-small is-left">
+                                    <i class="fas fa-user"></i>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="field">
+                            <label for="id_password" class="label">Password</label>
+                            <div class="control has-icons-left">
+                                <input type="password" name="password" autocomplete="current-password" required id="id_password" class="input">
+                                <span class="icon is-small is-left">
+                                    <i class="fas fa-lock"></i>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="field">
+                            <div class="control">
+                                <label class="checkbox">
+                                    <input type="checkbox" name="remember_me">
+                                    Remember me
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="field mt-5">
+                            <div class="control">
+                                <button type="submit" class="button is-primary is-fullwidth">
+                                    <span class="icon">
+                                        <i class="fas fa-sign-in-alt"></i>
+                                    </span>
+                                    <span>Log In</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" name="next" value="{{ next }}">
+                    </form>
+                    
+                    <!-- Password Reset Link -->
+                    <div class="has-text-centered mt-4">
+                        <a href="{% url 'password_reset' %}" class="has-text-grey">Forgot your password?</a>
+                    </div>
+                </div>
+                
+                <!-- Contact Admin Note -->
+                <div class="has-text-centered mt-5">
+                    <p class="has-text-grey is-size-7">
+                        Need an account? Contact your school administrator.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- JavaScript for notification dismissal -->
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Get all delete buttons
+        const deleteButtons = document.querySelectorAll('.notification .delete');
+        
+        // Add event listener to each delete button
+        deleteButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                const notification = button.parentNode;
+                notification.style.display = 'none';
+            });
+        });
+    });
+</script>
+
+<!-- Additional Styling -->
+<style>
+    .has-shadow {
+        box-shadow: 0 0.5em 1em -0.125em rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.02);
+    }
+    
+    @media screen and (min-width: 769px) {
+        .box {
+            padding: 2.5rem;
+        }
+    }
+</style>
+{% endblock %}

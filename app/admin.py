@@ -1,6 +1,9 @@
 from django.contrib import admin
 from django.utils.html import format_html
 from .models import Student, ParentProfile, DisciplineReport
+admin.site.site_header  = "SMS Discipline Department"
+admin.site.site_title   = "Discipline Department"
+admin.site.index_title  = "Welcome, Staff!"
 
 @admin.register(Student)
 class StudentAdmin(admin.ModelAdmin):
