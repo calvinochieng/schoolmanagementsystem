@@ -102,6 +102,7 @@ def create_parent_profile(request):
         if form.is_valid():
             # Get the student from the form
             student = form.cleaned_data['student']
+            full_name = form.cleaned_data['full_name']
             parent_role = form.cleaned_data['parent_role']
             phone = form.cleaned_data['phone']
             
@@ -128,6 +129,7 @@ def create_parent_profile(request):
             # Create parent profile linked to the user
             parent_profile = ParentProfile(
                 user=user,
+                full_name=full_name,
                 parent_role=parent_role,
                 phone=phone,
                 student=student,
@@ -150,6 +152,24 @@ def create_parent_profile(request):
     
     return render(request, 'parent/create_parent_profile.html', {'form': form})
 
+
+@login_required
+@user_passes_test(is_staff)
+def edit_parent_profile(request, pk):
+    '''
+    View for editing an existing parent profile. The current details are pre-filled in the form.
+    '''
+    parent_profile = get_object_or_404(ParentProfile, pk=pk)
+    form = ParentProfileForm(instance=parent_profile)
+    action = 'edit'
+    if request.method == 'POST':
+        form = ParentProfileForm(request.POST, instance = parent_profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Parent profile updated successfully.")
+            return redirect('parents_list')
+    return render(request, 'parent/create_parent_profile.html', {'action': action,'form': form, 'parent_profile': parent_profile})
+
 @login_required
 @user_passes_test(is_staff)
 def display_parent_credentials(request):
@@ -163,14 +183,43 @@ def display_parent_credentials(request):
         return render(request, 'parent/parent_credentials.html', {'credentials': credentials})
     else:
         messages.warning(request, "No new parent credentials to display.")
-        return redirect('list_parents')  # Redirect to a suitable page
+        return redirect('parents_list')  # Redirect to a suitable page
 
 @login_required
 @user_passes_test(is_staff)
-def list_parents(request):
+def parents_list(request):
     """View to display all parent profiles."""
     parents = ParentProfile.objects.all().select_related('user', 'student')
-    return render(request, 'parent/list_parents.html', {'parents': parents})
+    return render(request, 'parent/parents_list.html', {'parents': parents})
+
+# Create parent detail view to show parent profile and their children/students it take the parents username as a parameter
+
+@login_required
+def parent_detail_view(request, username):
+    """
+    Displays detailed information about a specific parent profile.
+    Includes personal info, children (students), and discipline reports.
+    """
+    # Get the parent profile or return 404
+    parent_profile = get_object_or_404(ParentProfile.objects.select_related('user', 'student'), user__username=username)
+    
+    # Get the linked student(s) for this parent
+    students = parent_profile.student.all()
+    
+    # Get discipline reports for each student, newest first
+    discipline_reports = DisciplineReport.objects.filter(
+        student__in=students, is_deleted=False
+    ).select_related('added_by').order_by('-created_at')
+    
+    context = {
+        'parent_profile': parent_profile,
+        'students': students,
+        'discipline_reports': discipline_reports,
+        'page_title': f"{parent_profile.user.get_full_name() or username} - Parent Profile",
+    }
+    
+    return render(request, 'parent/parent_detail.html', context)
+
 
 # --- Parent Dashboard View ---
 @login_required

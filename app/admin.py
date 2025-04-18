@@ -28,15 +28,15 @@ class StudentAdmin(admin.ModelAdmin):
 
 @admin.register(ParentProfile)
 class ParentProfileAdmin(admin.ModelAdmin):
-    list_display = ('user_full_name', 'parent_role', 'phone', 'student_name', 'added_by', 'created_at')
+    list_display = ('get_full_name', 'parent_role', 'phone', 'student_name', 'added_by', 'created_at')
     list_filter = ('parent_role', 'added_by', 'created_at')
-    search_fields = ('user__username', 'user__first_name', 'user__last_name', 'phone', 'student__name')
+    search_fields = ('user__username', 'user__first_name', 'user__last_name','full_name', 'phone', 'student__name')
     readonly_fields = ('created_at', 'updated_at')
     autocomplete_fields = ['user', 'student', 'added_by']
     
     fieldsets = (
         ('User Information', {
-            'fields': ('user', 'parent_role', 'phone')
+            'fields': ('user','full_name', 'parent_role', 'phone', 'email')
         }),
         ('Student Link', {
             'fields': ('student', 'added_by')
@@ -46,11 +46,7 @@ class ParentProfileAdmin(admin.ModelAdmin):
             'classes': ('collapse',)
         }),
     )
-    
-    def user_full_name(self, obj):
-        return obj.user.get_full_name() or obj.user.username
-    user_full_name.short_description = 'Parent Name'
-    
+        
     def student_name(self, obj):
         return obj.student.name
     student_name.short_description = 'Student'

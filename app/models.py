@@ -73,7 +73,7 @@ class ParentProfile(models.Model):
         related_name='parent_profile',
         primary_key=True, # Often good practice for profile models
     )
-    full_name = models.CharField(max_length=255)
+    full_name = models.CharField(max_length=255, null=True, blank=True)
     PARENT_ROLE_CHOICES = [
         ('father', 'Father'),
         ('mother', 'Mother'),
@@ -97,6 +97,12 @@ class ParentProfile(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    # get parents name if not there return username
+    def get_full_name(self):
+        if self.full_name:
+            return self.full_name
+        return self.user.username
 
     # Add validation to ensure linked user is not staff/superuser
     def clean(self):

@@ -36,7 +36,12 @@ urlpatterns = [
   
     path('parents/create/', views.create_parent_profile, name='create_parent_profile'),
     path('parents/credentials/', views.display_parent_credentials, name='display_parent_credentials'),
-    path('parents/', views.list_parents, name='list_parents'),
+    path('parents/', views.parents_list, name='parents_list'),
+    # parent_detail view is a placeholder for the parent detail view
+    path('parents/<str:username>/', views.parent_detail_view, name='parent_detail'),
+    # Placeholder for editing a parent profile - needs a view function `edit_parent_profile`
+    path('parents/<int:pk>/edit/', views.edit_parent_profile, name='edit_parent_profile'),
+
 
     # Note: Login, Logout, Password Change/Reset are typically handled at the project level
     # using django.contrib.auth.urls

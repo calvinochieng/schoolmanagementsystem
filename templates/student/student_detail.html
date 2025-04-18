@@ -139,7 +139,7 @@
                         <tbody>
                             {% for parent_profile in student.parent_profiles.all %}
                             <tr>
-                                <td>{{ parent_profile.user.get_full_name|default:parent_profile.user.username }}</td>
+                                <td>{{ parent_profile.get_full_name|default:parent_profile.user.username }}</td>
                                 <td>{{ parent_profile.get_parent_role_display }}</td>
                                 <td>{{ parent_profile.phone }}</td>
                                 <td>{{ parent_profile.user.email }}</td>

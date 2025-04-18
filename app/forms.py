@@ -77,9 +77,13 @@ class DisciplineReportForm(forms.ModelForm):
 # The logic to create User and ParentProfile objects, generate passwords, etc.,
 # will reside primarily in the VIEW function that processes this form.
 
-class ParentProfileForm(forms.Form):
-    student = forms.ModelChoiceField(
-        queryset=Student.objects.all(),
+class ParentProfileForm(forms.ModelForm):    
+    class Meta:
+        model = ParentProfile  # Specify the model the form is based on
+        # List the fields from the model to include in the form
+        fields = ['student', 'full_name', 'parent_role', 'phone', 'email']
+    student = forms.ModelChoiceField(        
+        queryset=Student.objects.filter(parent_profiles__isnull=True),
         label="Select Student",
         widget=forms.Select(attrs={'class': 'form-control'})
     )
@@ -107,12 +111,37 @@ class ParentProfileForm(forms.Form):
         widget=forms.EmailInput(attrs={'class': 'form-control input'})
     )
     
-    def clean_phone(self):
-        phone = self.cleaned_data['phone']
-        # Check if phone number already exists
-        if ParentProfile.objects.filter(phone=phone).exists():
-            raise forms.ValidationError("This phone number is already registered with another parent.")
-        return phone
+    
+# class ParentProfileForm(forms.ModelForm):
+#     email = forms.EmailField(
+#         required=False, # Corresponds to blank=True on the model field
+#         label="Email Address (Optional)",
+#         widget=forms.EmailInput(attrs={'class': 'form-control input'})
+#     )
+
+#     class Meta:
+#         model = ParentProfile  # Specify the model the form is based on
+#         # List the fields from the model to include in the form
+#         fields = ['student', 'full_name', 'parent_role', 'phone', 'email']
+
+#         # Define labels for fields (optional, defaults to model field's verbose_name)
+#         labels = {
+#             'student': "Select Student",
+#             'full_name': "Full Name",
+#             'parent_role': "Parent Role",
+#             'phone': "Phone Number",
+#             # 'email' label is handled by the explicit field definition above
+#         }
+
+#         # Define widgets for fields (optional, defaults to Django's default widgets)
+#         widgets = {
+#             'student': forms.Select(attrs={'class': 'form-control'}),
+#             'full_name': forms.TextInput(attrs={'class': 'form-control input'}),
+#             'parent_role': forms.Select(attrs={'class': 'form-control'}), # Choices come from the model field
+#             'phone': forms.TextInput(attrs={'class': 'form-control input'}),
+#             # 'email' widget is handled by the explicit field definition above
+#         }
+
 
 # --- Other Potential Forms (To be created later) ---
 # class StudentForm(forms.ModelForm): ...

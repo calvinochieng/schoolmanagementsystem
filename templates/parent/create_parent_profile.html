@@ -8,8 +8,8 @@
 {% endblock %}
 
 {% block page_icon %}<span class="icon is-medium mr-2"><i class="fas fa-user-plus"></i></span>{% endblock %}
-{% block page_title %}Create Parent Profile{% endblock %}
-{% block page_subtitle %}Add a new parent account to the school management system{% endblock %}
+{% block page_title %}{% if action %} Update {% else %} Create {% endif %} Parent Profile{% endblock %}
+{% block page_subtitle %}{% if action %} Update {% else %} Create {% endif %} a parent account to the school management system{% endblock %}
 
 {% block content %}
 <div class="columns">
@@ -18,7 +18,7 @@
             <header class="card-header">
                 <p class="card-header-title">
                     <span class="icon mr-2"><i class="fas fa-user-plus"></i></span>
-                    Parent Information
+                    {% if action %} Update {% else %} Create {% endif %} Parent Information
                 </p>
             </header>
             <div class="card-content">
@@ -35,7 +35,7 @@
                         <label for="{{ form.student.id_for_label }}" class="label">{{ form.student.label }}</label>
                         <div class="control">
                             <div class="select is-fullwidth">
-                                {{ form.student }}
+                                {% if action %} {{parent_profile.student.name}} {% else %}{{ form.student }}{% endif %}
                             </div>
                         </div>
                         {% if form.student.errors %}
@@ -98,14 +98,14 @@
                         <div class="control">
                             <button type="submit" class="button is-primary is-fullwidth">
                                 <span class="icon"><i class="fas fa-save"></i></span>
-                                <span>Create Parent Profile</span>
+                                <span>{% if action %} Update {% else %} Create {% endif %} Parent Profile</span>
                             </button>
                         </div>
                     </div>
                 </form>
             </div>
             <footer class="card-footer">
-                <a href="{% url 'list_parents' %}" class="card-footer-item has-text-info">
+                <a href="{% url 'parents_list' %}" class="card-footer-item has-text-info">
                     <span class="icon"><i class="fas fa-arrow-left"></i></span>
                     <span>Back to Parents List</span>
                 </a>

@@ -1,0 +1,331 @@
+{% extends 'base.html' %}
+
+{% block title %}Parents List - School Management Portal{% endblock %}
+
+{% block breadcrumb_items %}
+    <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+    <li class="is-active"><a href="{% url 'parents_list' %}" aria-current="page">Parents</a></li>
+{% endblock %}
+
+{% block page_icon %}<span class="icon is-medium mr-2"><i class="fas fa-users"></i></span>{% endblock %}
+{% block page_title %}Parents{% endblock %}
+{% block page_subtitle %}Manage parent accounts and view student relationships{% endblock %}
+
+{% block content %}
+<div class="columns">
+    <div class="column is-12">
+        <!-- Search and Filter -->
+        <div class="card mb-5">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-search"></i></span>
+                    Search & Filter
+                </p>
+                <button class="card-header-icon" aria-label="toggle filters">
+                    <span class="icon">
+                        <i class="fas fa-angle-down"></i>
+                    </span>
+                </button>
+            </header>
+            <div class="card-content">
+                <form method="get" action="{% url 'parents_list' %}">
+                    <div class="columns is-multiline">
+                        <div class="column is-4">
+                            <div class="field">
+                                <label class="label">Name</label>
+                                <div class="control has-icons-left">
+                                    <input class="input" type="text" name="name" placeholder="Search by name" value="{{ request.GET.name|default:'' }}">
+                                    <span class="icon is-small is-left">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-4">
+                            <div class="field">
+                                <label class="label">Student</label>
+                                <div class="control has-icons-left">
+                                    <div class="select is-fullwidth">
+                                        <select name="student">
+                                            <option value="">All Students</option>
+                                            {% for student in students %}
+                                                <option value="{{ student.id }}" {% if request.GET.student == student.id|stringformat:"i" %}selected{% endif %}>{{ student.name }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="icon is-small is-left">
+                                        <i class="fas fa-user-graduate"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-4">
+                            <div class="field">
+                                <label class="label">Parent Role</label>
+                                <div class="control has-icons-left">
+                                    <div class="select is-fullwidth">
+                                        <select name="role">
+                                            <option value="">All Roles</option>
+                                            <option value="mother" {% if request.GET.role == 'mother' %}selected{% endif %}>Mother</option>
+                                            <option value="father" {% if request.GET.role == 'father' %}selected{% endif %}>Father</option>
+                                            <option value="guardian" {% if request.GET.role == 'guardian' %}selected{% endif %}>Guardian</option>
+                                            <option value="other" {% if request.GET.role == 'other' %}selected{% endif %}>Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="icon is-small is-left">
+                                        <i class="fas fa-user-tag"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="column is-12">
+                            <div class="field is-grouped is-grouped-right">
+                                <div class="control">
+                                    <button type="submit" class="button is-primary">
+                                        <span class="icon"><i class="fas fa-search"></i></span>
+                                        <span>Search</span>
+                                    </button>
+                                </div>
+                                <div class="control">
+                                    <a href="{% url 'parents_list' %}" class="button is-light">
+                                        <span class="icon"><i class="fas fa-undo"></i></span>
+                                        <span>Reset</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Parents List -->
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-users"></i></span>
+                    Parents ({{ parents|length }})
+                </p>
+                <a href="{% url 'create_parent_profile' %}" class="card-header-icon" aria-label="add parent">
+                    <span class="icon has-text-success">
+                        <i class="fas fa-plus-circle"></i>
+                    </span>
+                </a>
+            </header>
+            <div class="card-content">
+                <div class="table-container">
+                    <table class="table is-fullwidth is-hoverable is-striped">
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Student</th>
+                                <th>Role</th>
+                                <th>Contact</th>
+                                <th>Account Status</th>
+                                <th class="has-text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for parent in parents %}
+                            <tr>
+                                <td>
+                                    <div class="is-flex is-align-items-center">
+                                        <span class="icon mr-2"><i class="fas fa-user"></i></span>
+                                        {% comment %} Show parent {% endcomment %}
+                                        <span class="has-text-weight-medium">{{ parent.get_full_name }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    <a href="{% url 'student_detail' parent.student.id %}" class="has-text-info">
+                                        {{ parent.student.name }}
+                                    </a>
+                                </td>
+                                <td>
+                                    <span class="tag is-info is-light">
+                                        {{ parent.get_parent_role_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="is-flex is-flex-direction-column">
+                                        {% if parent.email %}
+                                        <span>
+                                            <span class="icon is-small mr-1"><i class="fas fa-envelope"></i></span>
+                                            <span>{{ parent.email }}</span>
+                                        </span>
+                                        {% endif %}
+                                        <span>
+                                            <span class="icon is-small mr-1"><i class="fas fa-phone"></i></span>
+                                            <span>{{ parent.phone }}</span>
+                                        </span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if parent.user %}
+                                        <span class="tag is-success">
+                                            <span class="icon is-small mr-1"><i class="fas fa-check-circle"></i></span>
+                                            Active
+                                        </span>
+                                    {% else %}
+                                        <span class="tag is-warning">
+                                            <span class="icon is-small mr-1"><i class="fas fa-exclamation-circle"></i></span>
+                                            No Account
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="has-text-right">
+                                    <div class="buttons is-right">
+                                        <a href="{% url 'parent_detail' parent.user.username %}" class="button is-small is-primary is-outlined">
+                                            <span class="icon is-small">
+                                                <i class="fas fa-eye"></i>
+                                            </span>
+                                            <span>View</span>
+                                        </a>
+                                        <a href="{% url 'edit_parent_profile' parent.pk  %}" class="button is-small is-info is-outlined">
+                                            <span class="icon is-small">
+                                                <i class="fas fa-edit"></i>
+                                            </span>
+                                            <span>Edit</span>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="has-text-centered py-5">
+                                    <p class="has-text-grey mb-4">No parent profiles found</p>
+                                    <a href="{% url 'create_parent_profile' %}" class="button is-small is-primary">
+                                        <span class="icon is-small">
+                                            <i class="fas fa-plus"></i>
+                                        </span>
+                                        <span>Create New Parent Profile</span>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <nav class="pagination is-centered mt-5" role="navigation" aria-label="pagination">
+                    {% if page_obj.has_previous %}
+                    <a href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                       class="pagination-previous">Previous</a>
+                    {% else %}
+                    <a class="pagination-previous" disabled>Previous</a>
+                    {% endif %}
+                    
+                    {% if page_obj.has_next %}
+                    <a href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                       class="pagination-next">Next</a>
+                    {% else %}
+                    <a class="pagination-next" disabled>Next</a>
+                    {% endif %}
+                    
+                    <ul class="pagination-list">
+                        {% for i in paginator.page_range %}
+                        {% if page_obj.number|add:'-3' <= i and i <= page_obj.number|add:'3' %}
+                        <li>
+                            <a href="?page={{ i }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}" 
+                               class="pagination-link {% if i == page_obj.number %}is-current{% endif %}" 
+                               aria-label="Page {{ i }}" 
+                               aria-current="{% if i == page_obj.number %}page{% endif %}">
+                                {{ i }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                    </ul>
+                </nav>
+                {% endif %}
+            </div>
+            <footer class="card-footer">
+                <a href="{% url 'create_parent_profile' %}" class="card-footer-item has-text-success">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Add Parent</span>
+                </a>
+                <a href="{% url 'dashboard' %}" class="card-footer-item has-text-grey">
+                    <span class="icon"><i class="fas fa-tachometer-alt"></i></span>
+                    <span>Back to Dashboard</span>
+                </a>
+                {% if parents %}
+                <a href="#" class="card-footer-item has-text-info js-export-parents">
+                    <span class="icon"><i class="fas fa-file-export"></i></span>
+                    <span>Export to CSV</span>
+                </a>
+                {% endif %}
+            </footer>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table thead th {
+        color: #4a4a4a;
+        font-weight: 600;
+    }
+    
+    .card {
+        box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    
+    .buttons.is-right {
+        justify-content: flex-end;
+    }
+    
+    .button {
+        border-radius: 4px;
+        transition: all 0.3s;
+    }
+    
+    .button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    @media screen and (max-width: 768px) {
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        .buttons.is-right {
+            justify-content: center;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Toggle search filters
+        const filterToggle = document.querySelector('.card-header-icon');
+        const filterContent = document.querySelector('.card-content');
+        
+        if (filterToggle && filterContent) {
+            filterToggle.addEventListener('click', function() {
+                const icon = this.querySelector('.fas');
+                icon.classList.toggle('fa-angle-down');
+                icon.classList.toggle('fa-angle-up');
+                
+                if (filterContent.style.display === 'none' || filterContent.style.display === '') {
+                    filterContent.style.display = 'block';
+                } else {
+                    filterContent.style.display = 'none';
+                }
+            });
+        }
+        
+        // Export to CSV functionality (placeholder)
+        const exportButton = document.querySelector('.js-export-parents');
+        if (exportButton) {
+            exportButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                alert('Export functionality would be implemented here');
+            });
+        }
+    });
+</script>
+{% endblock %}
