@@ -1,7 +1,8 @@
 import os
 from pathlib import Path
 
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
+
+from decouple import config, Csv
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-1dbj@569^_z3w2xhszqhl18%k&arlpe3v9zor#qg_a5olq-6)6'
@@ -9,7 +10,17 @@ SECRET_KEY = 'django-insecure-1dbj@569^_z3w2xhszqhl18%k&arlpe3v9zor#qg_a5olq-6)6
 DEBUG = True
 
 ALLOWED_HOSTS = ["127.0.0.1", "schoolmanagementsystem-a0cm.onrender.com"]
+GOOGLE_APP_PASSWORD = config('GOOGLE_APP_PASSWORD') 
 
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'calvinfpage@gmail.com'  # Replace with your actual Gmail address
+EMAIL_HOST_PASSWORD = GOOGLE_APP_PASSWORD  # Use an App Password, not your regular Gmail password
+DEFAULT_FROM_EMAIL = 'Gloria SDMS <calvinfpage@gmail.com>'
+
+SITE_URL = 'https://schoolmanagementsystem-a0cm.onrender.com'  # Replace with your actual site URL
 
 # Application definition
 

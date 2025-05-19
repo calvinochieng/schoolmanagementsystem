@@ -345,9 +345,7 @@
             }, 5000);
         });
     </script>
-
-    <script src="{% static 'js/main.js' %}"></script>
-
+    {% block extra_scripts %}{% endblock %}
     {% block scripts %}{% endblock %}
 </body>
 </html>

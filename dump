@@ -320,3 +320,437 @@ class Student(models.Model):
 
     class Meta:
         ordering = ['name', 'grade'] 
+
+
+
+        from django.shortcuts import render, get_object_or_404, redirect
+        from django.contrib.auth.decorators import login_required
+        from django.http import HttpResponseForbidden
+        from django.contrib import messages
+        from django.utils import timezone
+        from django.urls import reverse
+        from django.core.exceptions import PermissionDenied
+        
+        from .models import DisciplineReport, Student
+        from .forms import StatusUpdateForm  # You'll need to create this form
+        
+        
+        @login_required
+        def discipline_report_detail_view(request, pk):
+            """
+            Detailed view of a specific discipline report.
+            Shows report information, student details, and provides actions based on user permissions.
+            
+            Staff users can see all reports and update their status.
+            Parent users can only see reports related to their children.
+            """
+            # Get the report or return 404
+            report = get_object_or_404(DisciplineReport.objects.select_related(
+                'student', 'added_by'
+            ).prefetch_related(
+                'student__parent_profiles',
+                'student__parent_profiles__user'
+            ), pk=pk, is_deleted=False)
+            
+            # Check permissions
+            user = request.user
+            has_access = False
+            
+            if user.is_staff:
+                has_access = True
+            elif hasattr(user, 'parent_profile'):
+                # Check if this report is for the parent's student
+                has_access = user.parent_profile.student == report.student
+            
+            if not has_access:
+                raise PermissionDenied("You don't have permission to view this report.")
+            
+            # Handle status update form submission (staff only)
+            if request.method == 'POST' and user.is_staff and 'status' in request.POST:
+                previous_status = report.status
+                form = StatusUpdateForm(request.POST, instance=report)
+                
+                if form.is_valid():
+                    # Save the updated report
+                    updated_report = form.save(commit=False)
+                    updated_report.updated_at = timezone.now()
+                    updated_report.save()
+                    
+                    # Add status change comment if provided
+                    status_comment = request.POST.get('status_comment', '').strip()
+                    if status_comment:
+                        # This assumes you have a StatusUpdate model or similar
+                        # If not, you could append to the report's comment field instead
+                        from .models import StatusUpdate  # Import here to avoid circular imports
+                        StatusUpdate.objects.create(
+                            report=report,
+                            previous_status=previous_status,
+                            new_status=updated_report.status,
+                            comment=status_comment,
+                            updated_by=user
+                        )
+                    
+                    messages.success(request, f"Report status updated to {report.get_status_display()}")
+                    return redirect('discipline_report_detail', pk=pk)
+                else:
+                    messages.error(request, "Error updating status. Please check the form.")
+            else:
+                form = StatusUpdateForm(instance=report)
+            
+            # Check if the user can edit/delete this report
+            can_edit = user.is_staff
+            can_delete = user.is_superuser or user == report.added_by
+            
+            context = {
+                'report': report,
+                'status_choices': DisciplineReport.STATUS_CHOICES,
+                'severity_choices': DisciplineReport.SEVERITY_CHOICES,
+                'can_edit': can_edit,
+                'can_delete': can_delete,
+                'form': form,
+                # Include any status updates history if you've implemented that
+                'status_updates': report.status_updates.order_by('-created_at') if hasattr(report, 'status_updates') else None,
+            }
+            
+            return render(request, 'discipline/discipline_report_detail.html', context)
+        
+        
+        @login_required
+        def discipline_report_update_status(request, pk):
+            """
+            Handle status updates independently from the main detail view.
+            This allows for a cleaner separation of concerns and easier testing.
+            """
+            if not request.user.is_staff:
+                return HttpResponseForbidden("Only staff members can update report status.")
+            
+            if request.method != 'POST':
+                return redirect('discipline_report_detail', pk=pk)
+            
+            report = get_object_or_404(DisciplineReport, pk=pk, is_deleted=False)
+            previous_status = report.status
+            
+            # Update the status
+            new_status = request.POST.get('status')
+            if new_status and new_status in dict(DisciplineReport.STATUS_CHOICES):
+                report.status = new_status
+                report.updated_at = timezone.now()
+                report.save()
+                
+                # Handle status comment if provided
+                status_comment = request.POST.get('status_comment', '').strip()
+                if status_comment:
+                    # If you have a StatusUpdate model:
+                    try:
+                        from .models import StatusUpdate
+                        StatusUpdate.objects.create(
+                            report=report,
+                            previous_status=previous_status,
+                            new_status=new_status,
+                            comment=status_comment,
+                            updated_by=request.user
+                        )
+                    except ImportError:
+                        # Otherwise append to report comment
+                        if report.comment:
+                            report.comment += f"\n\n[Status Update by {request.user.get_full_name() or request.user.username} on {timezone.now().strftime('%Y-%m-%d %H:%M')}]\n"
+                        else:
+                            report.comment = f"[Status Update by {request.user.get_full_name() or request.user.username} on {timezone.now().strftime('%Y-%m-%d %H:%M')}]\n"
+                        
+                        report.comment += f"Status changed from {dict(DisciplineReport.STATUS_CHOICES)[previous_status]} to {dict(DisciplineReport.STATUS_CHOICES)[new_status]}.\n"
+                        report.comment += f"Comment: {status_comment}"
+                        report.save()
+                
+                messages.success(request, f"Report status updated to {report.get_status_display()}")
+            else:
+                messages.error(request, "Invalid status value provided.")
+            
+            return redirect('discipline_report_detail', pk=pk)
+        
+        
+        @login_required
+        def discipline_report_delete(request, pk):
+            """
+            Soft delete a discipline report (mark as deleted).
+            Only superusers or the report creator can delete.
+            """
+            report = get_object_or_404(DisciplineReport, pk=pk, is_deleted=False)
+            
+            # Check permissions
+            if not (request.user.is_superuser or request.user == report.added_by):
+                return HttpResponseForbidden("You don't have permission to delete this report.")
+            
+            if request.method == 'POST':
+                # Soft delete
+                report.is_deleted = True
+                report.save()
+                messages.success(request, "Discipline report has been deleted.")
+                return redirect('discipline_report_list')
+            
+            # If not POST, redirect back to detail view
+            return redirect('discipline_report_detail', pk=pk)
+        
+        
+        @login_required
+        def discipline_report_edit(request, pk):
+            """
+            Edit an existing discipline report.
+            Only staff members can edit reports.
+            """
+            # This is a placeholder function - you would need to implement the full form handling
+            # Including the form class and template
+            if not request.user.is_staff:
+                return HttpResponseForbidden("Only staff members can edit reports.")
+            
+            report = get_object_or_404(DisciplineReport, pk=pk, is_deleted=False)
+            
+            # Redirect to the actual edit view or render edit form
+            # For now we'll just redirect back to the detail page
+            messages.info(request, "Edit functionality to be implemented.")
+            return redirect('discipline_report_detail', pk=pk)
+        
+        
+        # Here's a definition for the StatusUpdateForm class that can be used above
+        from django import forms
+        
+        class StatusUpdateForm(forms.ModelForm):
+            """Form for updating the status of a discipline report."""
+            
+            class Meta:
+                model = DisciplineReport
+                fields = ['status']
+                widgets = {
+                    'status': forms.Select(attrs={'class': 'select is-fullwidth'})
+                }
+
+
+
+                from django import forms
+                # Import your models here (adjust the path if necessary)
+                # from .models import ParentProfile, Student
+                # Assuming you have models like these:
+                # class Student(models.Model):
+                #     # ... student fields ...
+                #     def __str__(self):
+                #         return f"Student {self.id}" # Or name, etc.
+                
+                # class ParentProfile(models.Model):
+                #     PARENT_ROLE_GUARDIAN = 'guardian'
+                #     PARENT_ROLE_MOTHER = 'mother'
+                #     PARENT_ROLE_FATHER = 'father'
+                #     # ... other roles ...
+                #     PARENT_ROLE_CHOICES = [
+                #         (PARENT_ROLE_GUARDIAN, 'Guardian'),
+                #         (PARENT_ROLE_MOTHER, 'Mother'),
+                #         (PARENT_ROLE_FATHER, 'Father'),
+                #         # ... other choices ...
+                #     ]
+                #
+                #     student = models.ForeignKey(Student, on_delete=models.CASCADE) # Or ManyToManyField? Check your model.
+                #     full_name = models.CharField(max_length=255)
+                #     parent_role = models.CharField(max_length=50, choices=PARENT_ROLE_CHOICES)
+                #     phone = models.CharField(max_length=15, unique=True) # IMPORTANT: unique=True assumed
+                #     email = models.EmailField(blank=True, null=True, unique=True) # IMPORTANT: unique=True assumed, blank/null for optional
+                
+                class ParentProfileForm(forms.ModelForm):
+                    # You can still explicitly define fields here if you need more control
+                    # than the ModelForm provides automatically (e.g., different queryset, widget attributes)
+                    # If you explicitly define a field here, ensure it's also listed in Meta.fields.
+                
+                    # Example: Explicitly defining email to ensure widget/label/required status
+                    # is exactly as you had it, though ModelForm usually infers this well.
+                    email = forms.EmailField(
+                        required=False, # Corresponds to blank=True on the model field
+                        label="Email Address (Optional)",
+                        widget=forms.EmailInput(attrs={'class': 'form-control input'})
+                    )
+                
+                    class Meta:
+                        model = ParentProfile  # Specify the model the form is based on
+                        # List the fields from the model to include in the form
+                        fields = ['student', 'full_name', 'parent_role', 'phone', 'email']
+                
+                        # Define labels for fields (optional, defaults to model field's verbose_name)
+                        labels = {
+                            'student': "Select Student",
+                            'full_name': "Full Name",
+                            'parent_role': "Parent Role",
+                            'phone': "Phone Number",
+                            # 'email' label is handled by the explicit field definition above
+                        }
+                
+                        # Define widgets for fields (optional, defaults to Django's default widgets)
+                        widgets = {
+                            'student': forms.Select(attrs={'class': 'form-control'}),
+                            'full_name': forms.TextInput(attrs={'class': 'form-control input'}),
+                            'parent_role': forms.Select(attrs={'class': 'form-control'}), # Choices come from the model field
+                            'phone': forms.TextInput(attrs={'class': 'form-control input'}),
+                            # 'email' widget is handled by the explicit field definition above
+                        }
+                
+                    # clean_phone and clean_email methods are NO LONGER NEEDED *if*
+                    # 'phone' and 'email' fields have `unique=True` on the ParentProfile model.
+                    # The ModelForm's default validation handles uniqueness checks correctly
+                    # for both create and update operations (`self.instance`).
+                
+                    # **IMPORTANT**: If unique=True is NOT set on your model fields,
+                    # you MUST keep the original clean_phone and clean_email methods here:
+                    #
+                    # def clean_phone(self):
+                    #     phone = self.cleaned_data['phone']
+                    #     # Check if this is an update (instance exists)
+                    #     if self.instance and self.instance.pk:
+                    #         # Exclude the current instance from the uniqueness check
+                    #         existing = ParentProfile.objects.filter(phone=phone).exclude(pk=self.instance.pk).exists()
+                    #         if existing:
+                    #             raise forms.ValidationError("This phone number is already registered with another parent.")
+                    #     else:
+                    #         # This is a new instance, so check all records
+                    #         if ParentProfile.objects.filter(phone=phone).exists():
+                    #             raise forms.ValidationError("This phone number is already registered with another parent.")
+                    #     return phone
+                    #
+                    # def clean_email(self):
+                    #     email = self.cleaned_data.get('email')
+                    #     if not email:  # Skip validation if email is empty (since it's optional)
+                    #         return email
+                    #
+                    #     # Check if this is an update (instance exists)
+                    #     if self.instance and self.instance.pk:
+                    #         # Exclude the current instance from the uniqueness check
+                    #         existing = ParentProfile.objects.filter(email=email).exclude(pk=self.instance.pk).exists()
+                    #         if existing:
+                    #             raise forms.ValidationError("This email is already registered with another parent.")
+                    #     else:
+                    #         # This is a new instance, so check all records
+                    #         if ParentProfile.objects.filter(email=email).exists():
+                    #             raise forms.ValidationError("This email is already registered with another parent.")
+                    #     return email
+
+
+
+////// Parent edit dumpt //////
+from django import forms
+from django.db.models import Q
+from .models import ParentProfile, Student
+
+class ParentProfileForm(forms.ModelForm):
+    class Meta:
+        model = ParentProfile
+        fields = ['student', 'full_name', 'parent_role', 'phone', 'email']
+
+    student = forms.ModelChoiceField(
+        queryset=Student.objects.none(),   # we’ll override this in __init__
+        label="Select Student",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    # … your other fields here …
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # base queryset: only students with no parent profiles
+        qs = Student.objects.filter(parent_profiles__isnull=True)
+
+        # if we’re editing, include that student even though they have a profile
+        if self.instance and self.instance.pk:
+            qs = qs | Student.objects.filter(pk=self.instance.student_id)
+
+        self.fields['student'].queryset = qs.distinct()
+
+
+
+//// Parent portal dumpt //////
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from .models import ParentProfile, Student, DisciplineReport
+
+@login_required
+def parent_portal_detail(request):
+    """
+    View for parent portal showing student details and discipline reports.
+    Only accessible by users with a parent profile.
+    """
+    # Check if user has a parent profile
+    try:
+        parent_profile = request.user.parent_profile
+    except ParentProfile.DoesNotExist:
+        messages.error(request, "You don't have access to the parent portal.")
+        return redirect('dashboard')
+    
+    # Get the student associated with this parent
+    student = parent_profile.student
+    
+    # Get all discipline reports for this student, ordered by date (newest first)
+    discipline_reports = DisciplineReport.objects.filter(
+        student=student,
+        is_deleted=False
+    ).order_by('-date')
+    
+    context = {
+        'parent_profile': parent_profile,
+        'student': student,
+        'discipline_reports': discipline_reports,
+    }
+    
+    return render(request, 'parent_portal_detail.html', context)
+
+
+
+    from django.shortcuts import render, get_object_or_404, redirect
+    from django.contrib.auth.decorators import login_required
+    from django.contrib import messages
+    from .models import ParentProfile, Student, DisciplineReport
+    
+    @login_required
+    def parent_portal_detail(request):
+        """
+        View for parent portal showing student details and discipline reports.
+        Accessible by users with a parent profile and superusers who can filter between parents.
+        """
+        # For superusers: allow filtering by parent_id if provided
+        if request.user.is_superuser:
+            parent_id = request.GET.get('parent_id')
+            
+            # Get all parent profiles for dropdown filter
+            all_parents = ParentProfile.objects.all().order_by('student__name')
+            
+            if parent_id:
+                # If specific parent requested, get that parent's profile
+                parent_profile = get_object_or_404(ParentProfile, user_id=parent_id)
+            elif all_parents.exists():
+                # Default to first parent if none specified
+                parent_profile = all_parents.first()
+            else:
+                messages.warning(request, "No parent profiles exist in the system.")
+                return redirect('dashboard')
+                
+            student = parent_profile.student
+            
+        else:
+            # Regular parent user - check if they have a parent profile
+            try:
+                parent_profile = request.user.parent_profile
+                student = parent_profile.student
+                all_parents = None  # Regular parents don't need the list of all parents
+            except ParentProfile.DoesNotExist:
+                messages.error(request, "You don't have access to the parent portal.")
+                return redirect('dashboard')
+        
+        # Get all discipline reports for this student, ordered by date (newest first)
+        discipline_reports = DisciplineReport.objects.filter(
+            student=student,
+            is_deleted=False
+        ).order_by('-date')
+        
+        context = {
+            'parent_profile': parent_profile,
+            'student': student,
+            'discipline_reports': discipline_reports,
+            'all_parents': all_parents,  # Will be None for regular parent users
+            'is_superuser': request.user.is_superuser
+        }
+        
+        return render(request, 'parent/parent_portal.html', context)
+
