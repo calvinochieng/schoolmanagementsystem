@@ -73,9 +73,6 @@ class DisciplineReportForm(forms.ModelForm):
 
 
 # 2. Parent Registration Form (Fields Definition)
-# NOTE: This is a standard forms.Form because it doesn't map directly to one model.
-# The logic to create User and ParentProfile objects, generate passwords, etc.,
-# will reside primarily in the VIEW function that processes this form.
 
 class ParentProfileForm(forms.ModelForm):    
     class Meta:
@@ -106,8 +103,8 @@ class ParentProfileForm(forms.ModelForm):
     )
     
     email = forms.EmailField(
-        required=False,
-        label="Email Address (Optional)",
+        required=True,
+        label="Email Address",
         widget=forms.EmailInput(attrs={'class': 'form-control input'})
     )
     def __init__(self, *args, **kwargs):
@@ -122,40 +119,24 @@ class ParentProfileForm(forms.ModelForm):
 
         self.fields['student'].queryset = qs.distinct()
     
-    
-# class ParentProfileForm(forms.ModelForm):
-#     email = forms.EmailField(
-#         required=False, # Corresponds to blank=True on the model field
-#         label="Email Address (Optional)",
-#         widget=forms.EmailInput(attrs={'class': 'form-control input'})
-#     )
-
-#     class Meta:
-#         model = ParentProfile  # Specify the model the form is based on
-#         # List the fields from the model to include in the form
-#         fields = ['student', 'full_name', 'parent_role', 'phone', 'email']
-
-#         # Define labels for fields (optional, defaults to model field's verbose_name)
-#         labels = {
-#             'student': "Select Student",
-#             'full_name': "Full Name",
-#             'parent_role': "Parent Role",
-#             'phone': "Phone Number",
-#             # 'email' label is handled by the explicit field definition above
-#         }
-
-#         # Define widgets for fields (optional, defaults to Django's default widgets)
-#         widgets = {
-#             'student': forms.Select(attrs={'class': 'form-control'}),
-#             'full_name': forms.TextInput(attrs={'class': 'form-control input'}),
-#             'parent_role': forms.Select(attrs={'class': 'form-control'}), # Choices come from the model field
-#             'phone': forms.TextInput(attrs={'class': 'form-control input'}),
-#             # 'email' widget is handled by the explicit field definition above
-#         }
-
-
-# --- Other Potential Forms (To be created later) ---
-# class StudentForm(forms.ModelForm): ...
-# class UserProfileForm(forms.ModelForm): ... # For users editing their own info
-# class CustomAuthenticationForm(AuthenticationForm): ... # If styling/customization needed
-# class CustomPasswordChangeForm(PasswordChangeForm): ... # If needed
+class StudentForm(forms.ModelForm):
+    """
+    Form for creating or updating a Student profile.
+    """
+    class Meta:
+        model = Student
+        #all fields from the Student model
+        fields = [
+            'name',
+            'grade',
+            'gender',
+            'enrollment_number',
+            'enrollment_date',
+            'enrolled_by',]
+        widgets = {
+            'name': forms.TextInput(attrs={'placeholder': 'Full Name'}),
+            'grade': forms.Select(attrs={'class': 'select'}),
+            'enrollment_number': forms.TextInput(attrs={'placeholder': 'e.g., 2023-001'}),
+            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
+            # Add other fields as needed
+        }

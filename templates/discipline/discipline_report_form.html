@@ -1,1 +1,218 @@
-report create
+{% extends 'base.html' %}
+
+{% block title %}Create Discipline Report - School Management Portal{% endblock %}
+
+{% block breadcrumb_items %}
+    <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
+    <li><a href="{% url 'discipline_report_list' %}">Discipline Reports</a></li>
+    <li class="is-active"><a href="#" aria-current="page">Create Report</a></li>
+{% endblock %}
+
+{% block page_icon %}<span class="icon is-medium mr-2"><i class="fas fa-clipboard-list"></i></span>{% endblock %}
+{% block page_title %}Create Discipline Report{% endblock %}
+{% block page_subtitle %}Record a new discipline incident for a student{% endblock %}
+
+{% block content %}
+<div class="columns">
+    <div class="column is-8 is-offset-2">
+        <div class="card">
+            <header class="card-header">
+                <p class="card-header-title">
+                    <span class="icon mr-2"><i class="fas fa-exclamation-circle"></i></span>
+                    New Discipline Report
+                </p>
+            </header>
+            <div class="card-content">
+                <div class="content">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="notification {% if message.tags == 'error' %}is-danger{% elif message.tags == 'success' %}is-success{% else %}is-info{% endif %}">
+                                <button class="delete"></button>
+                                {{ message }}
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                    
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Student Selection -->
+                        <div class="field">
+                            <label class="label">{{ form.student.label }}</label>
+                            <div class="control">
+                                {{ form.student }}
+                            </div>
+                            {% if form.student.errors %}
+                                <p class="help is-danger">{{ form.student.errors|join:", " }}</p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Date & Title (Side by Side) -->
+                        <div class="columns">
+                            <div class="column is-4">
+                                <div class="field">
+                                    <label class="label">{{ form.date.label }}</label>
+                                    <div class="control">
+                                        {{ form.date }}
+                                    </div>
+                                    {% if form.date.errors %}
+                                        <p class="help is-danger">{{ form.date.errors|join:", " }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="column is-8">
+                                <div class="field">
+                                    <label class="label">Report Title</label>
+                                    <div class="control has-icons-left">
+                                        {{ form.title }}
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-heading"></i>
+                                        </span>
+                                    </div>
+                                    {% if form.title.errors %}
+                                        <p class="help is-danger">{{ form.title.errors|join:", " }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Status & Severity (Side by Side) -->
+                        <div class="columns">
+                            <div class="column is-6">
+                                <div class="field">
+                                    <label class="label">Status</label>
+                                    <div class="control has-icons-left">
+                                        <div class="select is-fullwidth">
+                                            {{ form.status }}
+                                        </div>
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-tasks"></i>
+                                        </span>
+                                    </div>
+                                    {% if form.status.errors %}
+                                        <p class="help is-danger">{{ form.status.errors|join:", " }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="column is-6">
+                                <div class="field">
+                                    <label class="label">Severity Level</label>
+                                    <div class="control has-icons-left">
+                                        <div class="select is-fullwidth">
+                                            {{ form.severity }}
+                                        </div>
+                                        <span class="icon is-small is-left">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </span>
+                                    </div>
+                                    {% if form.severity.errors %}
+                                        <p class="help is-danger">{{ form.severity.errors|join:", " }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Description -->
+                        <div class="field">
+                            <label class="label">Incident Description</label>
+                            <div class="control">
+                                {{ form.description }}
+                            </div>
+                            {% if form.description.errors %}
+                                <p class="help is-danger">{{ form.description.errors|join:", " }}</p>
+                            {% endif %}
+                            <p class="help">Provide detailed information about what happened, when, where, and any witnesses.</p>
+                        </div>
+                        
+                        <!-- Comment (Note to Parent) -->
+                        <div class="field">
+                            <label class="label">{{ form.comment.label }}</label>
+                            <div class="control">
+                                {{ form.comment }}
+                            </div>
+                            {% if form.comment.errors %}
+                                <p class="help is-danger">{{ form.comment.errors|join:", " }}</p>
+                            {% endif %}
+                            <p class="help">This note will be visible to the student's parents or guardians.</p>
+                        </div>
+                        
+                        <!-- Submit Buttons -->
+                        <div class="field is-grouped mt-5">
+                            <div class="control">
+                                <button type="submit" class="button is-primary">
+                                    <span class="icon"><i class="fas fa-save"></i></span>
+                                    <span>Create Report</span>
+                                </button>
+                            </div>
+                            <div class="control">
+                                <a href="{% url 'discipline_report_list' %}" class="button is-light">
+                                    <span class="icon"><i class="fas fa-times"></i></span>
+                                    <span>Cancel</span>
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <footer class="card-footer">
+                <p class="card-footer-item">
+                    <span class="has-text-grey is-size-7">
+                        <span class="icon is-small mr-1"><i class="fas fa-info-circle"></i></span>
+                        Parents will be automatically notified by email when a report is created
+                    </span>
+                </p>
+            </footer>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Close notification messages on click
+        const notifications = document.querySelectorAll('.notification .delete');
+        notifications.forEach(notification => {
+            notification.addEventListener('click', () => {
+                notification.parentNode.remove();
+            });
+        });
+        
+        // Initialize any additional JavaScript needed for the form
+        // For example, you could add client-side validation here
+    });
+</script>
+
+<style>
+    /* Custom styling to match your existing templates */
+    .select, .select select {
+        width: 100%;
+    }
+    
+    .card {
+        box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1), 0 0 0 1px rgba(10, 10, 10, 0.05);
+        border-radius: 6px;
+        overflow: hidden;
+        margin-bottom: 1rem;
+    }
+    
+    /* Add styling for form validation */
+    .input.is-danger, .textarea.is-danger, .select.is-danger {
+        border-color: #f14668;
+    }
+    
+    /* Make the form more mobile-friendly */
+    @media screen and (max-width: 768px) {
+        .column.is-8.is-offset-2 {
+            width: 100%;
+            margin-left: 0;
+        }
+        
+        .columns {
+            margin: 0;
+        }
+        
+        .column {
+            padding: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}

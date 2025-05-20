@@ -10,6 +10,7 @@ urlpatterns = [
     path('dashboard/', views.dashboard, name='dashboard'), # Official (Admin/Staff) dashboard
 
     # --- Student URLs ---
+    path('students/create/', views.create_student, name='create_student'),
     path('students/', views.student_list, name='student_list'),
     # Placeholder for student detail - needs a view function `student_detail_view`
     path('students/<int:student_id>/', views.student_detail_view, name='student_detail'),

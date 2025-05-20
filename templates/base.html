@@ -168,7 +168,7 @@
                                 </a>
                                 <div class="navbar-dropdown">
                                     <a class="navbar-item" href="{% url 'discipline_report_list' %}">View All Reports</a>
-                                    <a class="navbar-item" href="/admin/app/disciplinereport/">Log New Report</a>
+                                    <a class="navbar-item" href="{% url "create_discipline_report" %}">Log New Report</a>
                                 </div>
                             </div>
                             {% if user.is_staff %}                            

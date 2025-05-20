@@ -365,89 +365,6 @@ def create_discipline_report(request):
 
 
 @login_required
-def student_list(request):
-    """
-    Lists all students with pagination and search functionality.
-    Accessible by Staff/Admin users.
-    """
-    user = request.user
-    if not user.is_staff:  # Only staff/admins can view student list
-        return HttpResponseForbidden("Access Denied.")
-
-    # Get search query from request
-    search_query = request.GET.get('search', '')
-    
-    # Base queryset
-    student_list_qs = Student.objects.all()
-    
-    # Apply search filter if provided
-    if search_query:
-        # Search in name or enrollment_number fields
-        student_list_qs = student_list_qs.filter(
-            models.Q(name__icontains=search_query) | 
-            models.Q(enrollment_number__icontains=search_query)
-        )
-    
-    # Apply sorting
-    student_list_qs = student_list_qs.order_by('grade', 'name')
-    
-    # Pagination
-    paginator = Paginator(student_list_qs, 25)
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-
-    context = {
-        'page_obj': page_obj,
-        'search_query': search_query,
-        'total_count': student_list_qs.count(),
-    }
-    return render(request, 'student/student_list.html', context)
-
-@login_required
-def student_detail_view(request, student_id):
-    """
-    Displays detailed information about a specific student.
-    Includes personal info, parent information, and discipline reports.
-    """
-    # Get the student or return 404
-    student = get_object_or_404(Student, pk=student_id)
-    
-    user = request.user
-    
-    # Check if user has permission to view this student
-    # Staff can view any student
-    # Parents can only view their own children
-    if not user.is_staff:
-        # Check if the user is a parent of this student
-        try:
-            parent_profile = ParentProfile.objects.get(user=user, student=student)
-        except ParentProfile.DoesNotExist:
-            return HttpResponseForbidden("Access Denied. You don't have permission to view this student.")
-    
-    # Get related data
-    parents = student.parent_profiles.all().select_related('user', 'added_by')
-    
-    # Get discipline reports, newest first
-    discipline_reports = (student.discipline_reports
-                         .filter(is_deleted=False)
-                         .select_related('added_by')
-                         .order_by('-date'))
-    
-    context = {
-        'student': student,
-        'parents': parents,
-        'discipline_reports': discipline_reports,
-        # Adding additional data for breadcrumbs and navigation
-        'page_title': f"{student.name} - Student Profile",
-    }
-    
-    return render(request, 'student/student_detail.html', context)
-
-
-
-# ///////
-
-@login_required
 def discipline_report_detail_view(request, pk):
     """
     Detailed view of a specific discipline report.
@@ -620,6 +537,112 @@ def discipline_report_edit(request, pk):
     # For now we'll just redirect back to the detail page
     messages.info(request, "Edit functionality to be implemented.")
     return redirect('discipline_report_detail', pk=pk)
+
+
+# --- Students Views (for Admin/ Staff) ---
+def create_student(request):
+    """
+    View for adding a new student.
+    Accessible only by Staff/Admin users.
+    """
+    user = request.user
+    if not user.is_staff:  # Only staff/admins can add students
+        return HttpResponseForbidden("Access Denied.")
+
+    if request.method == 'POST':
+        form = StudentForm(request.POST)
+        if form.is_valid():
+            student = form.save(commit=False)
+            student.added_by = user
+            student.save()
+            messages.success(request, "Student added successfully.")
+            return redirect('student_list')
+    else:
+        form = StudentForm()
+
+    return render(request, 'student/add_student.html', {'form': form})
+
+@login_required
+def student_list(request):
+    """
+    Lists all students with pagination and search functionality.
+    Accessible by Staff/Admin users.
+    """
+    user = request.user
+    if not user.is_staff:  # Only staff/admins can view student list
+        return HttpResponseForbidden("Access Denied.")
+
+    # Get search query from request
+    search_query = request.GET.get('search', '')
+    
+    # Base queryset
+    student_list_qs = Student.objects.all()
+    
+    # Apply search filter if provided
+    if search_query:
+        # Search in name or enrollment_number fields
+        student_list_qs = student_list_qs.filter(
+            models.Q(name__icontains=search_query) | 
+            models.Q(enrollment_number__icontains=search_query)
+        )
+    
+    # Apply sorting
+    student_list_qs = student_list_qs.order_by('grade', 'name')
+    
+    # Pagination
+    paginator = Paginator(student_list_qs, 25)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'total_count': student_list_qs.count(),
+    }
+    return render(request, 'student/student_list.html', context)
+
+@login_required
+def student_detail_view(request, student_id):
+    """
+    Displays detailed information about a specific student.
+    Includes personal info, parent information, and discipline reports.
+    """
+    # Get the student or return 404
+    student = get_object_or_404(Student, pk=student_id)
+    
+    user = request.user
+    
+    # Check if user has permission to view this student
+    # Staff can view any student
+    # Parents can only view their own children
+    if not user.is_staff:
+        # Check if the user is a parent of this student
+        try:
+            parent_profile = ParentProfile.objects.get(user=user, student=student)
+        except ParentProfile.DoesNotExist:
+            return HttpResponseForbidden("Access Denied. You don't have permission to view this student.")
+    
+    # Get related data
+    parents = student.parent_profiles.all().select_related('user', 'added_by')
+    
+    # Get discipline reports, newest first
+    discipline_reports = (student.discipline_reports
+                         .filter(is_deleted=False)
+                         .select_related('added_by')
+                         .order_by('-date'))
+    
+    context = {
+        'student': student,
+        'parents': parents,
+        'discipline_reports': discipline_reports,
+        # Adding additional data for breadcrumbs and navigation
+        'page_title': f"{student.name} - Student Profile",
+    }
+    
+    return render(request, 'student/student_detail.html', context)
+
+
+# ///////
 
 
 # Add more placeholders as needed for edit/delete/profile/etc.

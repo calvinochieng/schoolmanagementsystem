@@ -16,9 +16,9 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'calvinfpage@gmail.com'  # Replace with your actual Gmail address
+EMAIL_HOST_USER = 'gloriakinyagitonga@gmail.com'  # Replace with your actual Gmail address
 EMAIL_HOST_PASSWORD = GOOGLE_APP_PASSWORD  # Use an App Password, not your regular Gmail password
-DEFAULT_FROM_EMAIL = 'Gloria SDMS <calvinfpage@gmail.com>'
+DEFAULT_FROM_EMAIL = 'School Discipline Management System <gloriakinyagitonga@gmail.com>'
 
 SITE_URL = 'https://schoolmanagementsystem-a0cm.onrender.com'  # Replace with your actual site URL
 
