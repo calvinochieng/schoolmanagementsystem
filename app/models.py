@@ -141,7 +141,7 @@ def send_discipline_notification(discipline_report):
         report_url = reverse('discipline_report_detail_view', kwargs={'pk': discipline_report.pk})
         report_absolute_url = f"{settings.SITE_URL}{report_url}"
     except:
-        report_absolute_url = "Please log in to the school portal to view the report."
+        report_absolute_url = f"https://schoolmanagementsystem-a0cm.onrender.com/reports/{discipline_report.pk}"
     
     # For each parent, send a personalized email
     for parent in parents:

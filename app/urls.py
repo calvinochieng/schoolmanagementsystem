@@ -12,18 +12,18 @@ urlpatterns = [
     # --- Student URLs ---
     path('students/create/', views.create_student, name='create_student'),
     path('students/', views.student_list, name='student_list'),
-    # Placeholder for student detail - needs a view function `student_detail_view`
+    # Placeholder for student detail 
     path('students/<int:student_id>/', views.student_detail_view, name='student_detail'),
 
     # --- Discipline Report URLs ---
     path('reports/', views.discipline_report_list, name='discipline_report_list'),
     path('reports/new/', views.create_discipline_report, name='create_discipline_report'),
-    # Placeholder for report detail - needs a view function `discipline_report_detail_view`
+    # Placeholder for report detail
     path('reports/<int:pk>/', views.discipline_report_detail_view, name='discipline_report_detail'),
-    # Placeholder for editing a report - needs a view function `update_discipline_report`
+    # Placeholder for editing a report
     path('reports/<int:pk>/edit/', views.discipline_report_edit, name='discipline_report_edit'),
     path('reports/<int:pk>/edit/status/', views.discipline_report_update_status, name='discipline_report_update_status'),
-    # Placeholder for deleting a report (soft delete) - needs a view function `delete_discipline_report`
+    # Placeholder for deleting a report (soft delete) 
     path('reports/<int:pk>/delete/', views.discipline_report_delete, name='discipline_report_delete'),
 
     # --- User/Profile URLs (Examples - more needed) ---
