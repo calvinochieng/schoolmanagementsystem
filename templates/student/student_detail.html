@@ -116,7 +116,7 @@
                     Parent Information
                 </p>
                 {% if user.is_staff %}
-                <a href="#" class="card-header-icon" aria-label="add parent">
+                <a href="{% url "create_parent_profile" %}" class="card-header-icon" aria-label="add parent">
                     <span class="icon has-text-success">
                         <i class="fas fa-user-plus"></i>
                     </span>
@@ -161,7 +161,7 @@
                         <span class="icon"><i class="fas fa-exclamation-triangle"></i></span>
                         No parents linked to this student.
                         {% if user.is_staff %}
-                        <a href="#" class="has-text-weight-bold">Add a parent</a>
+                        <a href="{% url "create_parent_profile" %}" class="has-text-weight-bold">Add a parent</a>
                         {% endif %}
                     </p>
                 </div>
@@ -179,7 +179,7 @@
                     Discipline Reports
                 </p>
                 {% if user.is_staff %}
-                <a href="{% url 'create_discipline_report' %}?student={{ student.id }}" class="card-header-icon" aria-label="add report">
+                <a href="{% url 'create_discipline_report' %}" class="card-header-icon" aria-label="add report">
                     <span class="icon has-text-success">
                         <i class="fas fa-plus"></i>
                     </span>

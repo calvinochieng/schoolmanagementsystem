@@ -21,6 +21,9 @@ from django.contrib.auth import login, authenticate
 from django.contrib.auth import logout
 from django.contrib.auth.forms import AuthenticationForm
 
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+
 def login(request):
     """View for user login."""
     if request.user.is_authenticated:
@@ -39,6 +42,11 @@ def login(request):
     else:
         form = AuthenticationForm()
     return render(request, 'registration/login.html', {'form': form})
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('login')
 
 # --- Index View ---
 def index(request):
@@ -172,9 +180,12 @@ def create_parent_profile(request):
             
             messages.success(request, "Parent profile created successfully.")
             return redirect('display_parent_credentials')
+        else:
+            messages.warning(request, "Some field are not correct, please check email field or phone number if they have been used before.")
+      
     else:
         form = ParentProfileForm()
-    
+
     return render(request, 'parent/create_parent_profile.html', {'form': form})
 
 
@@ -301,7 +312,7 @@ def discipline_report_list(request):
         return HttpResponseForbidden("Access Denied.")
 
     status_filter = request.GET.get('status', None)
-    student_filter = request.GET.get('student_id', None)
+    student_filter = request.GET.get('enrollment_number', None)
 
     report_list = DisciplineReport.objects.filter(is_deleted=False).select_related(
         'student', 'added_by'
@@ -310,8 +321,8 @@ def discipline_report_list(request):
     if status_filter:
         report_list = report_list.filter(status=status_filter)
     if student_filter:
-        # Add validation for student_id if needed
-        report_list = report_list.filter(student_id=student_filter)
+        # Add validation for enrollment_number if needed
+        report_list = report_list.filter(enrollment_number=student_filter)
 
     paginator = Paginator(report_list, 20)
     page_number = request.GET.get('page')
@@ -540,6 +551,8 @@ def discipline_report_edit(request, pk):
 
 
 # --- Students Views (for Admin/ Staff) ---
+@login_required
+@user_passes_test(is_staff)
 def create_student(request):
     """
     View for adding a new student.
@@ -553,14 +566,14 @@ def create_student(request):
         form = StudentForm(request.POST)
         if form.is_valid():
             student = form.save(commit=False)
-            student.added_by = user
+            student.enrolled_by = user
             student.save()
             messages.success(request, "Student added successfully.")
-            return redirect('student_list')
+            return redirect('student_detail', student_id=student.id)
     else:
         form = StudentForm()
 
-    return render(request, 'student/add_student.html', {'form': form})
+    return render(request, 'student/student_form.html', {'form': form})
 
 @login_required
 def student_list(request):
@@ -641,20 +654,3 @@ def student_detail_view(request, student_id):
     
     return render(request, 'student/student_detail.html', context)
 
-
-# ///////
-
-
-# Add more placeholders as needed for edit/delete/profile/etc.
-# def update_discipline_report(request, pk): ...
-# def delete_discipline_report(request, pk): ...
-# def profile_view(request): ...
-# def profile_edit_view(request): ...
-# def register_parent_view(request): ...
-# --- TODO / Next Steps ---
-# - Define DisciplineReportForm in forms.py (ensure fields like 'student' are handled correctly)
-# - Create Detail Views (Student, Discipline Report, Parent Profile)
-# - Create Update/Edit Views (Report Status/Severity, Profile info?)
-# - Create Delete Views (using soft delete 'is_deleted=True' for reports)
-# - Implement Parent Registration View (using native User, setting is_staff=False, is_superuser=False)
-# - Implement "force password change on first login" for parents

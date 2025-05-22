@@ -180,7 +180,7 @@
                                     {% if user.is_superuser %} 
                                     <a class="navbar-item" href="">Register Staff</a>
                                     {% endif %}
-                                    <a class="navbar-item" href="/admin/app/student/add/">Register Student</a>
+                                    <a class="navbar-item" href="{% url "create_student" %}">Register Student</a>
                                     <a class="navbar-item" href="{% url "create_parent_profile" %}">Register Parent</a>
                                 </div>
                             </div>
@@ -206,12 +206,7 @@
                                         <span>{{ user.first_name|default:user.username }}</span>
                                     </a>
                                     <div class="navbar-dropdown is-right">
-                                        <a class="navbar-item" href="#">
-                                            <span class="icon"><i class="fas fa-user-cog"></i></span>
-                                            <span>Profile Settings</span>
-                                        </a>
-                                        <hr class="navbar-divider">
-                                        <a class="navbar-item" href="#">
+                                        <a class="navbar-item" href=" {% url "logout" %}">
                                             <span class="icon has-text-danger"><i class="fas fa-sign-out-alt"></i></span>
                                             <span>Logout</span>
                                         </a>

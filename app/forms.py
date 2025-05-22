@@ -130,13 +130,23 @@ class StudentForm(forms.ModelForm):
             'name',
             'grade',
             'gender',
-            'enrollment_number',
             'enrollment_date',
             'enrolled_by',]
         widgets = {
-            'name': forms.TextInput(attrs={'placeholder': 'Full Name'}),
-            'grade': forms.Select(attrs={'class': 'select'}),
-            'enrollment_number': forms.TextInput(attrs={'placeholder': 'e.g., 2023-001'}),
-            'date_of_birth': forms.DateInput(attrs={'type': 'date'}),
-            # Add other fields as needed
+            'name': forms.TextInput(attrs={                
+                'placeholder': 'Full Name',
+                'class': 'input'
+            }),
+            'grade': forms.Select(attrs={''
+                'class': 'select', 
+                'class': 'input'
+                }),
+            'enrollment_date':forms.DateInput(attrs={
+                'type': 'date', 
+                'class': 'input'
+                }),
+            'date_of_birth': forms.DateInput(attrs={
+                'type': 'date', 
+                'class': 'input'
+                }),
         }
