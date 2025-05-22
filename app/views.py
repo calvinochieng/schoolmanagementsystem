@@ -321,8 +321,9 @@ def discipline_report_list(request):
     if status_filter:
         report_list = report_list.filter(status=status_filter)
     if student_filter:
-        # Add validation for enrollment_number if needed
-        report_list = report_list.filter(enrollment_number=student_filter)
+        # Add validation for enrollment_number if needed        
+        student_filter = Student.objects.get(enrollment_number=student_filter)
+        report_list = report_list.filter(student=student_filter)
 
     paginator = Paginator(report_list, 20)
     page_number = request.GET.get('page')
