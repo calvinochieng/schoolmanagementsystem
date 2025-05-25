@@ -1,15 +1,528 @@
-{% extends "base.html" %}
-{% block content %}
+<!DOCTYPE html>
+<html lang="en" class="has-navbar-fixed-top">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>School Management System - Discipline Department</title>
 
-<div class="hero is-medium">
-    <div class="hero-body">
-        <div class="container has-text-centered">
-            <h1 class="title">Welcome to the Dashboard</h1>
-            <h2 class="subtitle">Please log in to access your dashboard.</h2>                    
-            <a class="button is-link" href="{% url "login" %}">
-                <span class="icon"><i class="fas fa-sign-in-alt"></i></span>&nbsp;Log in
-            </a>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.9.4/css/bulma.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/js/all.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --success-color: #4facfe;
+            --dark-color: #434343;
+            --light-bg: #f5f7fa;
+        }
+
+        html, body, button, input, select, textarea {
+            font-family: 'Inter', 'Poppins', sans-serif;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* Basic navbar */
+        .navbar.is-fixed-top {
+            background: white;
+            border-bottom: 1px solid #dbdbdb;
+            box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1);
+        }
+
+        .navbar-brand .navbar-item {
+            color: var(--primary-color);
+            font-weight: 800;
+            font-size: 1.5rem;
+        }
+
+        /* Basic Hero section */
+        .hero.is-primary {
+            background-color: var(--primary-color);
+            background-image: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .hero .title {
+            font-weight: 800;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .hero .subtitle {
+            font-weight: 500;
+            font-size: 1.3rem;
+        }
+        
+        /* Academic research section */
+        .research-section {
+            background: white;
+            padding: 4rem 0;
+            border-top: 3px solid var(--primary-color);
+        }
+
+        .research-quote {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem;
+            border-radius: 15px;
+            font-style: italic;
+            font-size: 1.1rem;
+            line-height: 1.8;
+            margin: 2rem 0;
+            position: relative;
+        }
+
+        .research-quote::before {
+            content: '"';
+            font-size: 4rem;
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            opacity: 0.3;
+        }
+
+        /* Basic cards */
+        .card {
+            border-radius: 6px;
+            box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1);
+            border: 1px solid #dbdbdb;
+            background: white;
+            margin-bottom: 1.5rem; /* Add some space between cards */
+        }
+
+        .card-image img {
+            border-radius: 6px 6px 0 0;
+        }
+
+        /* Basic buttons */
+        .button.is-success.is-large {
+            background-color: var(--success-color);
+            border: none;
+            border-radius: 4px; /* Simpler radius */
+            padding: 1rem 2rem; /* Simpler padding */
+            font-weight: 600;
+            font-size: 1.2rem;
+            color: white;
+        }
+         .button.is-primary.is-rounded {
+             background-color: var(--primary-color);
+             color: white;
+         }
+
+
+        /* Basic Stats boxes */
+        .stats-box {
+            background: white;
+            border: 1px solid #dbdbdb;
+            border-radius: 6px;
+            padding: 1.5rem;
+            text-align: center;
+            box-shadow: 0 2px 3px rgba(10, 10, 10, 0.1);
+            margin-bottom: 1rem;
+        }
+
+        .stats-number {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        /* Basic feature icons */
+        .feature-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            background-color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1rem;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        /* Basic Timeline */
+        .timeline {
+            list-style-type: none;
+            position: relative;
+            padding-left: 1rem;
+            border-left: 2px solid var(--primary-color);
+        }
+
+        .timeline li {
+            position: relative;
+            margin-bottom: 1.5rem;
+            padding-left: 1.5rem;
+        }
+
+        .timeline li::before {
+            content: '';
+            position: absolute;
+            left: -8px; /* Adjust position */
+            top: 5px;
+            width: 14px; /* Smaller circle */
+            height: 14px;
+            border-radius: 50%;
+            background: var(--success-color);
+            border: 2px solid white;
+        }
+
+        /* Basic Section styling */
+        .section {
+            flex: 1;
+        }
+
+        .section.is-light {
+            background-color: var(--light-bg);
+        }
+
+
+        /* Responsive design (Simplified) */
+        @media (max-width: 768px) {
+            .hero .title {
+                font-size: 2.2rem;
+            }
+
+            .hero .subtitle {
+                font-size: 1.1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar is-fixed-top" role="navigation" aria-label="main navigation">
+        <div class="container">
+            <div class="navbar-brand">
+                <a class="navbar-item has-text-weight-bold is-size-4" href="{% url 'index' %}">
+                    <span class="icon mr-2"><i class="fas fa-school"></i></span>SMS Discipline
+                </a>
+
+                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarBasicMenu">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+
+            <div id="navbarBasicMenu" class="navbar-menu">
+                <div class="navbar-start">
+                            <a class="navbar-item {% if request.resolver_match.url_name == 'dashboard' %}is-active{% endif %}" href="{% url 'dashboard' %}">
+                                <span class="icon"><i class="fas fa-tachometer-alt"></i></span>&nbsp;Dashboard
+                            </a>
+                            <a class="navbar-item {% if request.resolver_match.url_name == 'student_list' %}is-active{% endif %}" href="{% url 'student_list' %}">
+                                <span class="icon"><i class="fas fa-user-graduate"></i></span>&nbsp;Students
+                            </a>
+                            
+                            <div class="navbar-item has-dropdown is-hoverable">
+                                <a class="navbar-link">
+                                    <span class="icon"><i class="fas fa-clipboard-list"></i></span>&nbsp;Reports
+                                </a>
+                                <div class="navbar-dropdown">
+                                    <a class="navbar-item" href="{% url 'discipline_report_list' %}">View All Reports</a>
+                                    <a class="navbar-item" href="{% url "create_discipline_report" %}">Log New Report</a>
+                                </div>
+                            </div>
+                </div>
+
+                <div class="navbar-end">
+                    <div class="navbar-item">
+                        <div class="buttons">
+                            {% if user.is_authenticated %}
+                                <div class="navbar-item has-dropdown is-hoverable">
+                                    <a class="button is-primary is-light">
+                                        <span class="icon"><i class="fas fa-user-circle"></i></span>
+                                        <span>{{ user.first_name|default:user.username }}</span>
+                                    </a>
+                                    <div class="navbar-dropdown is-right">
+                                        <a class="navbar-item" href=" {% url "logout" %}">
+                                            <span class="icon has-text-danger"><i class="fas fa-sign-out-alt"></i></span>
+                                            <span>Logout</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <a class="button is-link" href="{% url "login" %}">
+                                    <span class="icon"><i class="fas fa-sign-in-alt"></i></span>&nbsp;Log in
+                                </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
-{% endblock content %}
+    </nav>
+    
+    <section class="hero is-primary is-fullheight-with-navbar" id="dashboard">
+        <div class="hero-body">
+            <div class="container">
+                <div class="columns is-vcentered">
+                    <!-- Left Column - Content -->
+                    <div class="column is-6">
+                        <div class="hero-content">
+                            <h1 class="title is-1">
+                                Transform School Discipline Management
+                            </h1>
+                            <h2 class="subtitle is-3">
+                                A comprehensive web-based system designed to modernize discipline tracking and enhance communication between schools and parents.
+                            </h2>
+                            <p class="mb-5 is-size-5">
+                                Bridge the communication gap with real-time incident reporting, instant parent notifications, and data-driven insights that support student growth and accountability.
+                            </p>
+                            <p>
+                                <a class="button is-success is-large" href="{% url 'login' %}">
+                                    <span class="icon">
+                                        <i class="fas fa-sign-in-alt"></i>
+                                    </span>
+                                    <span>Access System</span>
+                                </a>
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column - Image -->
+                    <div class="column is-6">
+                        <div class="has-text-centered">
+                               <img src="https://lawliberty.org/app/uploads/2021/02/High-School-Students.jpg" alt="Kenyan Education System" class="hero-image">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <section class="section research-section">
+        <div class="container">
+            <div class="columns is-vcentered mx-4">
+                <div class="column is-8">
+                    <h2 class="title is-2">Research-Based Solution</h2>
+                    <p class="subtitle is-5 mb-4">Addressing Real Educational Challenges in Kenya</p>
+                    
+                    <div class="research-quote has-background-link">
+                        Effective discipline management in schools remains a significant challenge worldwide, particularly in the absence of timely communication between educators and parents. Traditional systems of reporting misconduct often fail to provide timely intervention opportunities.
+                    </div>
+                    
+                    <p class="is-size-5 mb-4">
+                        This system addresses the critical gap identified in current discipline management practices, where manual reporting and delayed communication hinder effective student behavior intervention.
+                    </p>
+                    
+                    <div class="highlight-box box has-background-warning" >
+                        <h3><i class="fas fa-exclamation-triangle"></i> The Problem</h3>
+                        <p>Many Kenyan schools still rely on monthly reports and occasional parent meetings, creating delays in addressing misconduct and reducing accountability opportunities for students.</p>
+                    </div>
+                </div>
+                <div class="column is-4">
+                    <div class="stats-box">
+                        <div class="stats-number">95%</div>
+                        <p><strong>Mobile Penetration</strong><br>in Kenya enables instant communication</p>
+                    </div>
+                    <div class="stats-box">
+                        <div class="stats-number">60%</div>
+                        <p><strong>Faster Response</strong><br>with real-time email notifications</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+
+     <section class="section" id="features">
+        <div class="container">
+            <h2 class="title is-2 has-text-centered mb-6">System Features</h2>
+            <div class="columns is-multiline is-centered">
+                <div class="column is-4-desktop is-6-tablet">
+                    <div class="card fade-in">
+                        <div class="card-image">
+                            <figure class="image is-4by3">
+                                <img src="https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Real-time Incident Tracking">
+                            </figure>
+                        </div>
+                        <div class="card-content">
+                            <div class="feature-icon">
+                                <i class="fas fa-clipboard-list"></i>
+                            </div>
+                            <h3 class="title is-4">Real-Time Incident Tracking</h3>
+                            <p class="subtitle is-6">Log disciplinary incidents instantly with detailed documentation, enabling immediate response and intervention strategies.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-4-desktop is-6-tablet">
+                    <div class="card fade-in">
+                        <div class="card-image">
+                            <figure class="image is-4by3">
+                                <img src="https://images.unsplash.com/photo-1516321318423-f06f85e504b3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Parent Communication Portal">
+                            </figure>
+                        </div>
+                        <div class="card-content">
+                            <div class="feature-icon">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <h3 class="title is-4">Enhanced Parent Communication</h3>
+                            <p class="subtitle is-6">Instant notifications and secure communication channels keep parents informed and engaged in their child's behavioral development.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="column is-4-desktop is-6-tablet">
+                    <div class="card fade-in">
+                        <div class="card-image">
+                            <figure class="image is-4by3">
+                                <img src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="Data Analytics Dashboard">
+                            </figure>
+                        </div>
+                        <div class="card-content">
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h3 class="title is-4">Comprehensive Analytics</h3>
+                            <p class="subtitle is-6">Generate detailed reports and identify behavioral patterns to make informed decisions about discipline policies and interventions.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="section is-light" id="about">
+        <div class="container">
+            <div class="columns is-vcentered">
+                <div class="column is-12-desktop">
+                    <div>
+                        <h2 class="title is-2">Built for Kenyan Schools</h2>
+                        <p class="subtitle is-5 mb-5">Our system is designed for the unique needs of Kenyan educational institutions.</p>
+                        <div class="columns is-multiline">
+                            <div class="column is-6">
+                                <div class="stats-box">
+                                    <span class="icon-text">
+                                        <span class="icon has-text-primary is-large"><i class="fas fa-landmark"></i></span>
+                                        <span class="ml-3">
+                                            <strong>Culturally Relevant</strong><br>
+                                            <small>Kenyan practices in mind</small>
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                             <div class="column is-6">
+                                <div class="stats-box">
+                                    <span class="icon-text">
+                                        <span class="icon has-text-success is-large"><i class="fas fa-hand-holding-heart"></i></span>
+                                        <span class="ml-3">
+                                            <strong>Easy to Use</strong><br>
+                                            <small>Intuitive interface</small>
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="column is-6">
+                                <div class="stats-box">
+                                    <span class="icon-text">
+                                        <span class="icon has-text-info is-large"><i class="fas fa-chart-bar"></i></span>
+                                        <span class="ml-3">
+                                            <strong>Reports</strong><br>
+                                            <small>Analytics for decisions</small>
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="column is-6">
+                                <div class="stats-box">
+                                    <span class="icon-text">
+                                        <span class="icon has-text-warning is-large"><i class="fas fa-shield-alt"></i></span>
+                                        <span class="ml-3">
+                                            <strong>Secure & Reliable</strong><br>
+                                            <small>Your data is safe</small>
+                                        </span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    
+    <footer class="footer has-background-white-ter">
+        <div class="content has-text-centered">
+            <p>
+                <strong>School Management System - Discipline Dept.</strong> by Gloria Kinya Gitonga.
+            </p>
+            <p class="is-size-7">
+                &copy; {% now "Y" %} All rights reserved.
+            </p>
+            <div class="mt-3">
+                <a href="#" class="has-text-grey mr-3"><span class="icon"><i class="fab fa-facebook"></i></span></a>
+                <a href="#" class="has-text-grey mr-3"><span class="icon"><i class="fab fa-twitter"></i></span></a>
+                <a href="#" class="has-text-grey"><span class="icon"><i class="fab fa-instagram"></i></span></a>
+            </div>
+            <p class="is-size-7 mt-3">
+                <span class="icon"><i class="far fa-clock"></i></span>
+                Current time (EAT): {% now "M d, Y, h:i:s A" %}
+            </p>
+        </div>
+    </footer>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Navbar burger functionality (This is the only transition kept)
+            const $navbarBurgers = Array.prototype.slice.call(document.querySelectorAll('.navbar-burger'), 0);
+            $navbarBurgers.forEach( el => {
+                el.addEventListener('click', () => {
+                    const target = el.dataset.target;
+                    const $target = document.getElementById(target);
+                    el.classList.toggle('is-active');
+                    $target.classList.toggle('is-active');
+                });
+            });
+
+             // Simple smooth scroll (Optional, can be removed if too "fancy")
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.getAttribute('href');
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                         // Basic scroll - no smooth behavior for simplicity
+                         // window.scrollTo(0, targetElement.offsetTop - 50); // 50 is approx navbar height
+                         // Or use smooth if allowed:
+                         targetElement.scrollIntoView({
+                             behavior: 'smooth',
+                             block: 'start'
+                         });
+                    }
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -213,10 +213,7 @@
                                     </div>
                                 </div>
                             {% else %}
-                                <a class="button is-primary" href="/admin/login/?next=/dashboard/">
-                                    <strong>Sign up</strong>
-                                </a>
-                                <a class="button is-light" href="/admin/login/?next=/dashboard/">
+                                <a class="button is-light" href="{% url "login" %}">
                                     <span class="icon"><i class="fas fa-sign-in-alt"></i></span>&nbsp;Log in
                                 </a>
                             {% endif %}
