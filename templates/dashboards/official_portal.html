@@ -185,7 +185,7 @@
                             <tr>
                                 <td colspan="6" class="has-text-centered py-5">
                                     <p class="has-text-grey mb-4">No recent reports</p>
-                                    <a href="/admin/app/disciplinereport/add/" class="button is-small is-primary">
+                                    <a href="{% url "create_discipline_report" %}" class="button is-small is-primary">
                                         <span class="icon is-small">
                                             <i class="fas fa-plus"></i>
                                         </span>
@@ -199,7 +199,7 @@
                 </div>
             </div>
             <footer class="card-footer">
-                <a href="/admin/app/disciplinereport/add/" class="card-footer-item has-text-primary">
+                <a href="{% url "create_discipline_report" %}" class="card-footer-item has-text-primary">
                     <span class="icon"><i class="fas fa-plus"></i></span>
                     <span>New Report</span>
                 </a>
@@ -225,7 +225,7 @@
             </header>
             <div class="card-content">
                 <div class="buttons">
-                    <a href="/admin/app/disciplinereport/add/" class="button is-primary">
+                    <a href="{% url "create_discipline_report" %}" class="button is-primary">
                         <span class="icon"><i class="fas fa-plus"></i></span>
                         <span>New Discipline Report</span>
                     </a>

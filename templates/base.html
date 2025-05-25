@@ -178,7 +178,7 @@
                                 </a>
                                 <div class="navbar-dropdown">
                                     {% if user.is_superuser %} 
-                                    <a class="navbar-item" href="">Register Staff</a>
+                                    <a class="navbar-item" href="/admin/auth/user/add/">Register Staff</a>
                                     {% endif %}
                                     <a class="navbar-item" href="{% url "create_student" %}">Register Student</a>
                                     <a class="navbar-item" href="{% url "create_parent_profile" %}">Register Parent</a>
